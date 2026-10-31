@@ -341,7 +341,7 @@
         "docs/features/focus-timer-core/verification.md"
       ],
       "file": "docs/features/focus-timer-core/tasks/t17-docs-adr-note-and-device-checklist.md",
-      "status": "todo"
+      "status": "done"
     }
   ]
 }
