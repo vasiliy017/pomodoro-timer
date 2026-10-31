@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import {
   allowedControls,
+  type CommandOutcome,
   type Notice,
   type PhaseKind,
   type PhaseStatus,
@@ -166,5 +167,96 @@ describe('TimerScreen', () => {
     show(null)
     expect(screen.getByText('Loading…')).toBeInTheDocument()
     expect(buttonNames()).toEqual([])
+  })
+})
+
+describe('AC-12 Restart cycle confirmation', () => {
+  const lossy = () => snap('focus', 'running', { revision: 7, completedInCycle: 3 })
+  const needsConfirmation = (snapshot: TimerSnapshot): CommandOutcome => ({
+    kind: 'needsConfirmation',
+    loss: { completedInCycle: 3, phaseInProgress: 'focus' },
+    snapshot
+  })
+
+  async function openDialog(snapshot = lossy()) {
+    show(snapshot)
+    send.mockResolvedValueOnce(needsConfirmation(snapshot))
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Restart cycle' }))
+    })
+  }
+
+  it('asks first, naming what will be lost', async () => {
+    await openDialog()
+    expect(send).toHaveBeenCalledWith('restartCycle', { confirmed: false })
+    const dialog = screen.getByRole('dialog', { name: 'Restart the cycle?' })
+    expect(dialog).toHaveTextContent(
+      '3 completed focus sessions will no longer count toward the long break, and the focus session in progress will end uncounted.'
+    )
+  })
+
+  it('names only the break in progress when no focus session is completed', async () => {
+    const snapshot = snap('shortBreak', 'running', { revision: 2 })
+    show(snapshot)
+    send.mockResolvedValueOnce({
+      kind: 'needsConfirmation',
+      loss: { completedInCycle: 0, phaseInProgress: 'shortBreak' },
+      snapshot
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Restart cycle' }))
+    })
+    expect(screen.getByRole('dialog')).toHaveTextContent('The short break in progress will end.')
+  })
+
+  it('confirm sends the confirmed command at the revision the User saw', async () => {
+    await openDialog()
+    send.mockResolvedValueOnce({
+      kind: 'applied',
+      snapshot: snap('focus', 'ready', { revision: 8 })
+    })
+    await act(async () => {
+      fireEvent.click(
+        within(screen.getByRole('dialog')).getByRole('button', { name: 'Restart cycle' })
+      )
+    })
+    expect(send).toHaveBeenLastCalledWith('restartCycle', { confirmed: true, revision: 7 })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('cancel closes the dialog and sends nothing more', async () => {
+    await openDialog()
+    send.mockClear()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(send).not.toHaveBeenCalled()
+  })
+
+  it('a stale confirmation is ignored: the dialog closes and the current state shows', async () => {
+    await openDialog()
+    send.mockResolvedValueOnce({
+      kind: 'ignored',
+      reason: 'staleRevision',
+      snapshot: snap('shortBreak', 'ready', { revision: 8, completedInCycle: 4 })
+    })
+    await act(async () => {
+      fireEvent.click(
+        within(screen.getByRole('dialog')).getByRole('button', { name: 'Restart cycle' })
+      )
+    })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('acts at once without a dialog when nothing would be lost', async () => {
+    show(snap('focus', 'ready'))
+    send.mockResolvedValueOnce({
+      kind: 'applied',
+      snapshot: snap('focus', 'ready', { revision: 2 })
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Restart cycle' }))
+    })
+    expect(send).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 })

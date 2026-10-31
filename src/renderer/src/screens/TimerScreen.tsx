@@ -1,5 +1,14 @@
-import type { Controls, Notice, PhaseKind, PhaseStatus, TimerSnapshot } from '@shared/timer'
+import { useState } from 'react'
+import type {
+  Controls,
+  Notice,
+  PhaseKind,
+  PhaseStatus,
+  RestartLoss,
+  TimerSnapshot
+} from '@shared/timer'
 import { Button } from '../components/ui/Button'
+import { Dialog } from '../components/ui/Dialog'
 import { useTimerState } from '../hooks/useTimerState'
 import styles from './TimerScreen.module.css'
 
@@ -40,10 +49,48 @@ function noticeText(notice: Notice): string {
   return focus ? 'Focus session complete' : 'Break over'
 }
 
+/** What a Restart cycle would throw away (AC-12); the same sentence as main's quit dialog. */
+function lossText({ completedInCycle, phaseInProgress }: RestartLoss): string {
+  const parts: string[] = []
+  if (completedInCycle > 0) {
+    const sessions = completedInCycle === 1 ? 'focus session' : 'focus sessions'
+    parts.push(
+      `${completedInCycle} completed ${sessions} will no longer count toward the long break`
+    )
+  }
+  if (phaseInProgress !== null) {
+    const uncounted = phaseInProgress === 'focus' ? ' uncounted' : ''
+    parts.push(`the ${PHASE_NAMES[phaseInProgress].toLowerCase()} in progress will end${uncounted}`)
+  }
+  const sentence = parts.join(', and ')
+  return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`
+}
+
 type ControlName = Exclude<keyof Controls, 'restartCycle'>
+
+/** A Restart cycle waiting for the User: the loss and the revision it was judged at. */
+interface PendingRestart {
+  loss: RestartLoss
+  revision: number
+}
 
 export function TimerScreen() {
   const { snapshot, remainingMs, send } = useTimerState()
+  const [pendingRestart, setPendingRestart] = useState<PendingRestart | null>(null)
+
+  async function restartCycle() {
+    const outcome = await send('restartCycle', { confirmed: false })
+    if (outcome?.kind === 'needsConfirmation') {
+      setPendingRestart({ loss: outcome.loss, revision: outcome.snapshot.revision })
+    }
+  }
+
+  function confirmRestart() {
+    if (!pendingRestart) return
+    setPendingRestart(null)
+    // Aimed at the state the dialog described: if it changed meanwhile, main ignores it as stale.
+    void send('restartCycle', { confirmed: true, revision: pendingRestart.revision })
+  }
 
   if (!snapshot) {
     return <p className={styles.placeholder}>Loading…</p>
@@ -94,9 +141,19 @@ export function TimerScreen() {
             </Button>
           ))}
         {controls.restartCycle && (
-          <Button onClick={() => void send('restartCycle')}>Restart cycle</Button>
+          <Button onClick={() => void restartCycle()}>Restart cycle</Button>
         )}
       </div>
+
+      <Dialog
+        open={pendingRestart !== null}
+        title="Restart the cycle?"
+        confirmLabel="Restart cycle"
+        onConfirm={confirmRestart}
+        onCancel={() => setPendingRestart(null)}
+      >
+        {pendingRestart && lossText(pendingRestart.loss)}
+      </Dialog>
     </div>
   )
 }

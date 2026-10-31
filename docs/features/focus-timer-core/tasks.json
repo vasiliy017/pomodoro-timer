@@ -283,7 +283,7 @@
         "src/renderer/src/components/ui/Dialog.test.tsx"
       ],
       "file": "docs/features/focus-timer-core/tasks/t14-restart-cycle-dialog.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T15",

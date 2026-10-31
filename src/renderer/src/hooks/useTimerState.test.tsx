@@ -241,3 +241,22 @@ describe('useTimerState', () => {
     expect(unsubscribe).toHaveBeenCalledOnce()
   })
 })
+
+describe('useTimerState — explicit revision', () => {
+  it('send can target the revision a dialog was opened at, not the newest one', async () => {
+    const { result } = await mount(snap({ revision: 7, completedInCycle: 3, focusNumber: 4 }))
+    push(snap({ revision: 8, completedInCycle: 4, focusNumber: null, phase: 'longBreak' }))
+    api.timerCommand.mockResolvedValue({
+      ok: true,
+      value: { kind: 'ignored', reason: 'staleRevision', snapshot: snap({ revision: 8 }) }
+    })
+    await act(async () => {
+      await result.current.send('restartCycle', { confirmed: true, revision: 7 })
+    })
+    expect(api.timerCommand).toHaveBeenCalledWith({
+      type: 'restartCycle',
+      revision: 7,
+      confirmed: true
+    })
+  })
+})

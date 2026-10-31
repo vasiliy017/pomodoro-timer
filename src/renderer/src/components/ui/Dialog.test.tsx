@@ -1,0 +1,72 @@
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { Dialog } from './Dialog'
+
+function renderDialog(open = true) {
+  const onConfirm = vi.fn()
+  const onCancel = vi.fn()
+  const view = render(
+    <Dialog
+      open={open}
+      title="Restart the cycle?"
+      confirmLabel="Restart cycle"
+      onConfirm={onConfirm}
+      onCancel={onCancel}
+    >
+      Something will be lost.
+    </Dialog>
+  )
+  return { ...view, onConfirm, onCancel }
+}
+
+describe('Dialog', () => {
+  it('opens as a modal named by its title, with its body', () => {
+    renderDialog()
+    const dialog = screen.getByRole('dialog', { name: 'Restart the cycle?' })
+    expect(dialog).toHaveProperty('open', true)
+    expect(dialog).toHaveTextContent('Something will be lost.')
+  })
+
+  it('renders nothing visible while closed', () => {
+    renderDialog(false)
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('confirm and cancel buttons call their handlers', () => {
+    const { onConfirm, onCancel } = renderDialog()
+    fireEvent.click(screen.getByRole('button', { name: 'Restart cycle' }))
+    expect(onConfirm).toHaveBeenCalledOnce()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onCancel).toHaveBeenCalledOnce()
+  })
+
+  it('Esc (the native cancel event) cancels without closing behind React', () => {
+    const { onCancel } = renderDialog()
+    const dialog = screen.getByRole('dialog')
+    const event = new Event('cancel', { cancelable: true })
+    dialog.dispatchEvent(event)
+    expect(onCancel).toHaveBeenCalledOnce()
+    expect(event.defaultPrevented).toBe(true)
+  })
+
+  it('focuses Cancel first, the safe choice', () => {
+    renderDialog()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
+  })
+
+  it('closes when open turns false', () => {
+    const { rerender, onConfirm, onCancel } = renderDialog()
+    rerender(
+      <Dialog
+        open={false}
+        title="Restart the cycle?"
+        confirmLabel="Restart cycle"
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      >
+        Something will be lost.
+      </Dialog>
+    )
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+})

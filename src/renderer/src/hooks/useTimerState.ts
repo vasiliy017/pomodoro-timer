@@ -9,10 +9,13 @@ export interface TimerState {
   snapshot: TimerSnapshot | null
   /** Time left now: computed from `endsAt` while running, the snapshot's value otherwise. */
   remainingMs: number
-  /** Sends a command aimed at the held snapshot's revision. Null when it could not be sent. */
+  /**
+   * Sends a command aimed at the held snapshot's revision, or at `revision` when given (a dialog
+   * confirms what the User saw when it opened). Null when it could not be sent.
+   */
   send(
     type: TimerCommand['type'],
-    options?: { confirmed?: boolean }
+    options?: { confirmed?: boolean; revision?: number }
   ): Promise<CommandOutcome | null>
 }
 
@@ -75,7 +78,7 @@ export function useTimerState(): TimerState {
     async (type, options) => {
       const current = held.current
       if (!current) return null
-      const { revision } = current
+      const revision = options?.revision ?? current.revision
       const command: TimerCommand =
         type === 'restartCycle'
           ? { type, revision, confirmed: options?.confirmed ?? false }
