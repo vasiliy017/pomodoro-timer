@@ -15,7 +15,7 @@
 | T5 | Add the 10,000-sequence command-safety property test | tests | Vasiliy | S | T4 | done | COMMIT |
 | T6 | Add the main-process clock adapter | infra | Vasiliy | S | — | done | COMMIT |
 | T7 | Add the phase-end signals adapter and the single timer window | infra | Vasiliy | M | T1 | done | COMMIT |
-| T8 | Map powerMonitor and clock notifications to timer callbacks | infra | Vasiliy | S | — | todo | — |
+| T8 | Map powerMonitor and clock notifications to timer callbacks | infra | Vasiliy | S | — | done | COMMIT |
 | T9 | Add the quit guard | app | Vasiliy | S | T1 | todo | — |
 | T10 | Build the timer service | app | Vasiliy | M | T4, T6 | todo | — |
 | T11 | Add the IPC timer contract across shared, main and preload | ports | Vasiliy | M | T6, T7, T10 | todo | — |

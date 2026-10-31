@@ -153,7 +153,7 @@
         "src/main/system-events.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t08-system-events-adapter.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T9",
