@@ -16,7 +16,7 @@
         "src/shared/timer.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t01-timer-types-and-helpers.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T2",

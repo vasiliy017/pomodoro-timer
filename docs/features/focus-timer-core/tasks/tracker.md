@@ -8,7 +8,7 @@
 
 | # | Task | Layer | Owner | Estimate | Blocked by | Status | Step |
 |---|---|---|---|---|---|---|---|
-| T1 | Define the timer types, default config and pure snapshot helpers | domain | Vasiliy | M | — | todo | — |
+| T1 | Define the timer types, default config and pure snapshot helpers | domain | Vasiliy | M | — | done | COMMIT |
 | T2 | Implement transition() for the five commands | domain | Vasiliy | M | T1 | todo | — |
 | T3 | Implement the deadline transition | domain | Vasiliy | M | T2 | todo | — |
 | T4 | Implement sleep, wake, new-day and clock-change transitions | domain | Vasiliy | M | T3 | todo | — |
