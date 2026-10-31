@@ -1,7 +1,13 @@
 import { join } from 'node:path'
 import { app, BrowserWindow } from 'electron'
-import { registerIpcHandlers } from './ipc'
+import { DEFAULT_TIMER_CONFIG } from '@shared/timer'
+import { systemClock } from './clock'
+import { broadcast, registerIpcHandlers } from './ipc'
+import { createSignals } from './signals'
 import { createSettingsStore } from './store'
+import { createTimerService } from './timer-service'
+
+let mainWindow: BrowserWindow | undefined
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -29,13 +35,28 @@ function createMainWindow(): BrowserWindow {
   return window
 }
 
+function showMainWindow(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    mainWindow = createMainWindow()
+    return
+  }
+  mainWindow.show()
+  mainWindow.focus()
+}
+
 void app.whenReady().then(() => {
   createSettingsStore(app.getPath('userData')).load()
-  registerIpcHandlers()
-  createMainWindow()
+  const timer = createTimerService({
+    clock: systemClock,
+    signals: createSignals({ onClick: showMainWindow }),
+    broadcast: (snapshot) => broadcast('timerState', snapshot),
+    config: DEFAULT_TIMER_CONFIG
+  })
+  registerIpcHandlers({ timer })
+  mainWindow = createMainWindow()
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createMainWindow()
+    if (BrowserWindow.getAllWindows().length === 0) showMainWindow()
   })
 })
 

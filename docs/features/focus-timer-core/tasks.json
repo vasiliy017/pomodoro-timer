@@ -216,7 +216,7 @@
         "src/main/index.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t11-ipc-timer-contract.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T12",

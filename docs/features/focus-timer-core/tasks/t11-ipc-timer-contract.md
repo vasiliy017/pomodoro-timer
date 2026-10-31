@@ -9,8 +9,8 @@ files_hint: ["src/shared/ipc.ts", "src/main/ipc.ts", "src/main/ipc.test.ts", "sr
 owner: "Vasiliy"
 estimate: "M"
 context_budget: "M"
-status: "todo"
-step: ""
+status: "done"
+step: "COMMIT"
 ---
 
 <!-- To the executing agent: work from what is inlined here. If a slice is insufficient, ambiguous,
