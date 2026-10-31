@@ -199,11 +199,24 @@ export function isTimerCommand(value: unknown): value is TimerCommand {
   return typeof type === 'string' && SIMPLE_COMMANDS.includes(type)
 }
 
-/** What can happen to the timer. Commands come from the window; T3/T4 add the system inputs. */
-export type TimerInput = { kind: 'command'; command: TimerCommand }
+/**
+ * What can happen to the timer. Commands come from the window; `deadline` is main's armed
+ * timeout reaching a running phase's `endsAt` (ADR-0003).
+ */
+export type TimerInput = { kind: 'command'; command: TimerCommand } | { kind: 'deadline' }
 
-/** Side effects main carries out after a transition. Commands have none. */
-export type TimerEffect = never
+/**
+ * Side effects main carries out after a transition, in order. Every phase end gives one `notify`
+ * then one `bounceDock` (AC-05, AC-06). Commands have none.
+ */
+export type TimerEffect =
+  | {
+      kind: 'notify'
+      notice: Notice
+      /** The phase now ready, so the notification can name it. */
+      next: { phase: PhaseKind; focusNumber: number | null }
+    }
+  | { kind: 'bounceDock' }
 
 /** How the rules judged an input. Main turns it into a `CommandOutcome` with a snapshot. */
 export type RuleOutcome =
@@ -228,7 +241,44 @@ export function transition(
   localDate: string,
   config: TimerConfig
 ): TransitionResult {
-  return applyCommand(state, input.command, now, localDate, config)
+  switch (input.kind) {
+    case 'command':
+      return applyCommand(state, input.command, now, localDate, config)
+    case 'deadline':
+      if (state.status !== 'running' || state.endsAt === null || now < state.endsAt) {
+        return ignored(state, 'notAllowed')
+      }
+      return endPhase(state, 'phaseEnded', localDate, config)
+  }
+}
+
+/**
+ * Settles the end of the running phase: only a focus session that ran out while the Mac was awake
+ * counts (AC-07); the next phase waits ready (AC-08). Emits one notification and one Dock bounce.
+ */
+function endPhase(
+  state: TimerState,
+  kind: Notice['kind'],
+  localDate: string,
+  config: TimerConfig
+): TransitionResult {
+  const counted = state.phase === 'focus' && kind === 'phaseEnded'
+  const completedInCycle = state.completedInCycle + (counted ? 1 : 0)
+  let next: Partial<TimerState>
+  if (state.phase === 'longBreak') next = freshCycle(localDate, config)
+  else if (state.phase === 'shortBreak') next = readyPhase('focus', config)
+  else if (completedInCycle >= config.focusSessionsPerCycle) next = readyPhase('longBreak', config)
+  else next = readyPhase('shortBreak', config)
+
+  const notice: Notice = { kind, endedPhase: state.phase, counted }
+  const result = applied(state, { completedInCycle, ...next, notice })
+  const { phase } = result.state
+  const focusNumber = phase === 'focus' ? result.state.completedInCycle + 1 : null
+  result.effects = [
+    { kind: 'notify', notice, next: { phase, focusNumber } },
+    { kind: 'bounceDock' }
+  ]
+  return result
 }
 
 function applyCommand(

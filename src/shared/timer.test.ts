@@ -26,6 +26,10 @@ function command(s: TimerState, cmd: TimerCommand, now = T0, localDate = TODAY) 
   return transition(s, { kind: 'command', command: cmd }, now, localDate, DEFAULT_TIMER_CONFIG)
 }
 
+function deadline(s: TimerState, now: number, localDate = TODAY) {
+  return transition(s, { kind: 'deadline' }, now, localDate, DEFAULT_TIMER_CONFIG)
+}
+
 /** A running focus session with `leftMs` to go at T0. */
 function runningFocus(leftMs: number, overrides: Partial<TimerState> = {}): TimerState {
   return state({ status: 'running', endsAt: T0 + leftMs, revision: 5, ...overrides })
@@ -525,5 +529,173 @@ describe('transition — commands', () => {
     const r = command(s, { type: 'start', revision: 0 })
     expect(r.state.revision).toBe(1)
     expect(r.state.notice).toBeNull()
+  })
+})
+
+describe('transition — deadline (phase end)', () => {
+  const bounce = { kind: 'bounceDock' }
+
+  describe('AC-07 focus end counts; the next phase waits ready', () => {
+    it('focus 2 of 4 ends: 2 completed, short break ready at 5:00, not running', () => {
+      const s = runningFocus(10 * MIN, { completedInCycle: 1 })
+      const r = deadline(s, T0 + 10 * MIN)
+      expect(r.outcome).toEqual({ kind: 'applied' })
+      expect(r.state).toMatchObject({
+        phase: 'shortBreak',
+        status: 'ready',
+        durationMs: 5 * MIN,
+        completedInCycle: 2,
+        endsAt: null,
+        revision: 6
+      })
+    })
+
+    it('a short break ends: focus ready at 25:00, cycle unchanged', () => {
+      const s = state({
+        phase: 'shortBreak',
+        durationMs: 5 * MIN,
+        status: 'running',
+        endsAt: T0,
+        completedInCycle: 2
+      })
+      const r = deadline(s, T0)
+      expect(r.state).toMatchObject({
+        phase: 'focus',
+        status: 'ready',
+        durationMs: 25 * MIN,
+        completedInCycle: 2
+      })
+      expect(r.state.notice).toEqual({
+        kind: 'phaseEnded',
+        endedPhase: 'shortBreak',
+        counted: false
+      })
+    })
+  })
+
+  describe('AC-05 / AC-06 signals: one notification, one Dock bounce, a notice', () => {
+    it('focus end emits notify (with the ready phase) then bounceDock, in that order', () => {
+      const s = runningFocus(0, { completedInCycle: 1 })
+      const r = deadline(s, T0)
+      const notice = { kind: 'phaseEnded', endedPhase: 'focus', counted: true }
+      expect(r.state.notice).toEqual(notice)
+      expect(r.effects).toEqual([
+        { kind: 'notify', notice, next: { phase: 'shortBreak', focusNumber: null } },
+        bounce
+      ])
+    })
+
+    it('break end tells which focus session is ready', () => {
+      const s = state({
+        phase: 'shortBreak',
+        durationMs: 5 * MIN,
+        status: 'running',
+        endsAt: T0,
+        completedInCycle: 2
+      })
+      expect(deadline(s, T0).effects[0]).toEqual({
+        kind: 'notify',
+        notice: { kind: 'phaseEnded', endedPhase: 'shortBreak', counted: false },
+        next: { phase: 'focus', focusNumber: 3 }
+      })
+    })
+
+    it('a second deadline for the same end is a no-op: exactly one notify and one bounce', () => {
+      const first = deadline(runningFocus(0), T0)
+      const second = deadline(first.state, T0 + 5)
+      expect(second.state).toBe(first.state)
+      expect(second.effects).toEqual([])
+      const all = [...first.effects, ...second.effects]
+      expect(all.filter((e) => e.kind === 'notify')).toHaveLength(1)
+      expect(all.filter((e) => e.kind === 'bounceDock')).toHaveLength(1)
+    })
+
+    it('a new phase end replaces the old notice', () => {
+      const s = state({
+        phase: 'shortBreak',
+        durationMs: 5 * MIN,
+        status: 'running',
+        endsAt: T0,
+        completedInCycle: 1,
+        notice: { kind: 'phaseEnded', endedPhase: 'focus', counted: true }
+      })
+      expect(deadline(s, T0).state.notice).toEqual({
+        kind: 'phaseEnded',
+        endedPhase: 'shortBreak',
+        counted: false
+      })
+    })
+
+    it('the next command clears the notice', () => {
+      const ended = deadline(runningFocus(0), T0).state
+      const r = command(ended, { type: 'start', revision: ended.revision }, T0 + MIN)
+      expect(r.state.notice).toBeNull()
+    })
+  })
+
+  describe('timing', () => {
+    it('an early deadline (now < endsAt) is a no-op without a revision bump', () => {
+      const s = runningFocus(MIN)
+      const r = deadline(s, T0 + MIN - 1)
+      expect(r.state).toBe(s)
+      expect(r.effects).toEqual([])
+    })
+
+    it('a late deadline (endsAt + 3 s, Mac awake) settles as usual and counts', () => {
+      const r = deadline(runningFocus(0, { completedInCycle: 0 }), T0 + 3_000)
+      expect(r.state.completedInCycle).toBe(1)
+      expect(r.effects).toHaveLength(2)
+    })
+
+    it('a paused phase never expires on its own', () => {
+      const s = state({ status: 'paused', remainingMs: MIN })
+      const r = deadline(s, T0 + 3 * 60 * MIN)
+      expect(r.state).toBe(s)
+      expect(r.effects).toEqual([])
+    })
+  })
+
+  describe('AC-08 a ready phase never starts by itself', () => {
+    it.each([10 * MIN, 3 * 60 * MIN])('ready short break untouched after %i ms', (wait) => {
+      const ready = deadline(runningFocus(0), T0).state
+      const r = deadline(ready, T0 + wait)
+      expect(r.state).toBe(ready)
+      expect(r.effects).toEqual([])
+      expect(toSnapshot(r.state, T0 + wait, DEFAULT_TIMER_CONFIG)).toMatchObject({
+        phase: 'shortBreak',
+        status: 'ready',
+        remainingMs: 5 * MIN
+      })
+    })
+  })
+
+  describe('AC-09 long break', () => {
+    it('focus 4 of 4 ends: 4 completed, long break ready at 15:00', () => {
+      const r = deadline(runningFocus(0, { completedInCycle: 3 }), T0)
+      expect(r.state).toMatchObject({
+        phase: 'longBreak',
+        status: 'ready',
+        durationMs: 15 * MIN,
+        completedInCycle: 4
+      })
+      expect(r.effects[0]).toMatchObject({ next: { phase: 'longBreak', focusNumber: null } })
+    })
+
+    it('the long break ends: cycle back to 0, focus 1 of 4 ready', () => {
+      const s = state({
+        phase: 'longBreak',
+        durationMs: 15 * MIN,
+        completedInCycle: 4,
+        status: 'running',
+        endsAt: T0
+      })
+      const r = deadline(s, T0)
+      expect(r.state).toMatchObject({ phase: 'focus', status: 'ready', completedInCycle: 0 })
+      expect(r.effects[0]).toEqual({
+        kind: 'notify',
+        notice: { kind: 'phaseEnded', endedPhase: 'longBreak', counted: false },
+        next: { phase: 'focus', focusNumber: 1 }
+      })
+    })
   })
 })

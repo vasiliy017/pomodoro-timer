@@ -61,7 +61,7 @@
         "src/shared/timer.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t03-phase-end-transitions.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T4",
