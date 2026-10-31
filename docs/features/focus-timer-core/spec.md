@@ -127,7 +127,7 @@ Traceability:
 ### US-10: Start each day fresh
 
 **As a** User
-**I want** the first time I come back on a new day to start a fresh cycle, clearing any phase left ready or paused from the day before
+**I want** a new day — from the Mac's local midnight — to start a fresh cycle, clearing any phase left ready or paused from the day before
 **So that** yesterday's sessions don't trigger a long break first thing
 
 ## 5. Acceptance criteria
@@ -136,13 +136,28 @@ Traceability:
 
 **Given** the User has a ready focus session and the cycle is at 0 of 4
 **When** the User starts it
-**Then** the focus session runs, counting down from 25:00, and the screen shows that it is a focus session and that it is focus session 1 of 4 in the cycle
+**Then** the focus session runs, counting down from 25:00, and the screen shows that it is a focus session and that it is focus session 1 of 4 in the cycle — on a focus session (ready, running or paused) the screen always shows «focus session N of 4» with N = the completed focus sessions in the cycle + 1, and on a break «N of 4 completed», so after a skipped or reset focus session 3 (2 completed) the next one is again focus session 3 of 4
 
 ### AC-02 (US-01) — error
 
 **Given** a focus session is already running
 **When** the User presses Start again (for example a double-click), or tries a control that does not apply to the current state (such as Pause on a ready phase)
-**Then** the running phase carries on unchanged — it is not restarted and nothing is counted twice — and only the controls that apply to the current state are offered
+**Then** the running phase carries on unchanged — it is not restarted and nothing is counted twice — and only the controls that apply to the current state are offered (AC-02b); a repeated click on any control — Start, Pause, Reset, Skip or Restart cycle — has the same effect as one click, because each command acts only on the phase the User saw when they clicked (a second Skip that arrives after the first has taken effect does not also skip the break that is now ready)
+
+### AC-02b (US-01, US-06) — domain invariant
+
+**Given** a current phase in any state
+**When** the User looks at the timer screen
+**Then** exactly these controls are offered, and any other command is ignored (Start also resumes a paused phase):
+
+| Current phase | Start / Resume | Pause | Reset | Skip | Restart cycle |
+|---|---|---|---|---|---|
+| ready focus session | ✓ | – | – | – | ✓ |
+| ready short or long break | ✓ | – | – | ✓ | ✓ |
+| running (any phase) | – | ✓ | ✓ | ✓ | ✓ |
+| paused (any phase) | ✓ (Resume) | – | ✓ | ✓ | ✓ |
+
+Skipping a ready break makes the next focus session the ready phase (a skipped long break sends the cycle back to 0, AC-09); a ready focus session cannot be skipped, so a break is reached only from a focus session that ended or was skipped after it was started
 
 ### AC-03 (US-01) — authorization
 
@@ -166,7 +181,7 @@ Traceability:
 
 **Given** the User has blocked notifications for the app in the Mac's settings, or Focus / Do Not Disturb is on
 **When** a phase ends
-**Then** the timer window still tells the User the phase has ended and shows the next phase ready, and the app's Dock icon draws attention once, so the phase end is never completely silent; because the app cannot tell whether the Mac hid its notification, the Dock icon does this on every phase end
+**Then** the timer window still tells the User the phase has ended and shows the next phase ready — that message stays on the timer screen beside the ready phase until the User's next command or the next phase end, and is still there when the window is closed and reopened (the same holds for the «ended while the Mac was asleep» message, AC-14) — and the app's Dock icon bounces once (it does not keep bouncing), so the phase end is never completely silent; because the app cannot tell whether the Mac hid its notification, the Dock icon does this on every phase end; the app never opens or raises the timer window by itself, so with notifications blocked and the window closed, the single Dock bounce and the waiting message are the only signals
 
 ### AC-07 (US-04) — happy
 
@@ -202,25 +217,25 @@ Traceability:
 
 **Given** 3 completed focus sessions in the cycle
 **When** the User chooses Restart cycle
-**Then** the app asks for confirmation whenever something would be lost — completed focus sessions in the cycle or a running or paused phase — and names what will be lost (here, 3 completed focus sessions that will no longer count toward the long break, plus the phase in progress if there is one); on confirm any running or paused phase ends uncounted, the cycle is 0 and focus session 1 of 4 is the ready phase at 25:00; on cancel nothing changes; only when the cycle is at 0 and the current phase is ready does Restart cycle act immediately without asking
+**Then** the app asks for confirmation whenever something would be lost — completed focus sessions in the cycle or a running or paused phase — and names what will be lost (here, 3 completed focus sessions that will no longer count toward the long break, plus the phase in progress if there is one); on confirm any running or paused phase ends uncounted, the cycle is 0 and focus session 1 of 4 is the ready phase at 25:00; on cancel nothing changes; only when the cycle is at 0 and the current phase is ready does Restart cycle act immediately without asking; a Restart cycle that would lose something never takes effect without the User's confirmation, whichever window sends it
 
 ### AC-13 (US-08) — happy
 
 **Given** a focus session is running with 18:00 left
 **When** the User closes the timer window
-**Then** the focus session keeps running and its phase-end notification still arrives; clicking the Dock icon (or the notification) reopens the window, which shows the current remaining time immediately, not an older value counting down; if instead the User quits the app, the running phase ends uncounted and the next launch shows focus session 1 of 4 as the ready phase with the cycle at 0
+**Then** the focus session keeps running and its phase-end notification still arrives; clicking the Dock icon (or the notification) reopens the window, which shows the current remaining time immediately, not an older value counting down; there is only ever one timer window — reopening shows that same window, never a second one; if instead the User quits the app (⌘Q, Quit from the Dock or the app menu) while something would be lost — completed focus sessions in the cycle or a running or paused phase — the app first asks for confirmation and names what will be lost, as Restart cycle does (AC-12), and on cancel nothing changes; on confirm, or when macOS quits the app for logout, shutdown or restart (never asked, never blocked), the running phase ends uncounted and the next launch shows focus session 1 of 4 as the ready phase with the cycle at 0
 
 ### AC-14 (US-09) — cross-context
 
 **Given** a focus session is running with 15:00 left and 1 completed in the cycle
 **When** the Mac sleeps for 2 hours and wakes
-**Then** the window tells the User the focus session ended while the Mac was asleep and was not counted, the cycle still shows 1 completed, a short break is the ready phase, and a notification says the focus session ended while the Mac was asleep; if the Mac sleeps for only 5 minutes, the focus session simply continues with 10:00 left; if instead a break's end passed while the Mac slept, on wake the next focus session is the ready phase at 25:00, the cycle is unchanged, and a notification says the break ended while the Mac was asleep; a paused phase is untouched by sleep
+**Then** the window tells the User the focus session ended while the Mac was asleep and was not counted, the cycle still shows 1 completed, a short break is the ready phase, and a notification says the focus session ended while the Mac was asleep; if the Mac sleeps for only 5 minutes, the focus session simply continues with 10:00 left; if instead a short break's end passed while the Mac slept, on wake the next focus session is the ready phase at 25:00, the cycle is unchanged, and a notification says the break ended while the Mac was asleep; if a long break's end passed while the Mac slept, it ended as usual — the cycle goes back to 0 and focus session 1 of 4 is the ready phase at 25:00 (AC-09), with the same «ended while the Mac was asleep» notification; a paused phase is untouched by sleep; when the Mac sleeps past midnight, the sleep result applies first and the new-day rule (AC-15) second — a focus session running at 23:50 with the Mac asleep until 08:00 wakes to focus session 1 of 4 ready at 25:00 with the cycle at 0, the window says the focus session ended while the Mac was asleep and was not counted, and exactly one notification says so; «asleep» means system sleep only (lid closed, Sleep from the menu, automatic sleep, including Power Nap's brief background wakes) — a locked screen, a sleeping display or a screen saver is not sleep, and a phase ends as usual during them; a focus session counts as completed when its scheduled end came no later than the moment the Mac went to sleep, even if the app noticed the end late
 
 ### AC-15 (US-10) — cross-context
 
 **Given** yesterday the User left focus session 4 of 4 paused with 14:07 left, with 3 completed in a cycle that began yesterday
 **When** the User comes back to the app the next day
-**Then** the app shows focus session 1 of 4 as the ready phase at 25:00 with the cycle at 0, and yesterday's paused session is not counted — a cycle belongs to the Mac's local date it began on, and whenever the current phase is not running on a later date the app starts a fresh cycle; a phase running across midnight is left alone until it ends: a focus session that runs out at 00:10 counts as a completed focus session, and the fresh cycle starts straight after it, with focus session 1 of 4 as the ready phase
+**Then** the app shows focus session 1 of 4 as the ready phase at 25:00 with the cycle at 0, and yesterday's paused session is not counted — a cycle belongs to the Mac's local date it began on, and whenever the current phase is not running on a later date the app starts a fresh cycle; the app checks for a new day at the Mac's local midnight, when the Mac wakes, at launch and when the Mac's time zone or clock changes, so the screen already shows the fresh cycle before the User can act on it (a Start pressed at 00:02 starts focus session 1 of 4, never yesterday's ready break), and a phase paused across midnight is cleared at midnight; a phase running across midnight is left alone until it ends: a focus session that runs out at 00:10 counts as a completed focus session, but the fresh cycle starts straight after it — even when it was focus session 4 of 4, no long break is offered — so the notification says the focus session is complete and focus session 1 of 4 is ready, and the screen shows focus session 1 of 4 as the ready phase at 25:00 with the cycle at 0
 
 ## 6. Non-functional requirements
 
@@ -230,7 +245,7 @@ Traceability:
 | Timing accuracy | remaining time shown never more than 1 s off wall-clock time over a 25-minute focus session, including after reopening the window or waking the Mac | unit tests with a simulated clock; one real 25-minute run checked against the system clock |
 | Control responsiveness | ≤ 100 ms from a click on Start, Pause, Reset, Skip or Restart cycle to the visible change | end-to-end test timing click → screen change |
 | Background resource use | ≤ 1% average CPU over 10 minutes and Energy Impact «Low» while a phase runs with the window hidden or closed | Activity Monitor on the owner's Mac, manual check before shipping |
-| Command safety | 0 cases of two phases running at once, a focus session counted twice, the cycle advanced by anything but a completed focus session, or the cycle reset to 0 by anything outside the glossary's reset list (long break ended or skipped, Restart cycle, new day, quit), across 10,000 random command sequences (repeats, two windows, clock changes) | randomized property test over the timer rules in CI |
+| Command safety | 0 cases of two phases running at once, a focus session counted twice, the cycle advanced by anything but a completed focus session, or the cycle reset to 0 by anything outside the glossary's reset list (long break ended or skipped, Restart cycle, new day, quit), across 10,000 random command sequences (repeats, late commands from a timer window that was closed and reopened, clock changes checked against the current default in §8 Q1) | randomized property test over the timer rules in CI |
 | Launch time | ≤ 2 s from a cold launch to the timer screen showing a ready focus session | end-to-end boot test timing to first window; manual stopwatch check of the packaged app |
 
 ## 6.1 Security / privacy
@@ -245,8 +260,11 @@ Traceability:
   cycle directly.
 - **Abuse cases:**
   - A compromised or buggy window sends crafted or repeated commands: only the five commands
-    exist, a command that does not fit the current state is ignored, and repeats have no extra
-    effect (AC-02, Command safety NFR).
+    exist — Start (which also resumes a paused phase), Pause, Reset, Skip and Restart cycle; a
+    command that does not fit the current state is ignored (AC-02b); each command acts only on the
+    phase the User saw, so repeats have no extra effect (AC-02); and a Restart cycle that would
+    lose progress never takes effect without confirmation, whichever window sends it (AC-12,
+    Command safety NFR).
   - Another macOS account on the same Mac tries to read or change the User's timer: denied by
     construction — each account runs its own app instance with its own state (AC-03).
   - Notification spam: at most one notification per phase end, and phases never start by
