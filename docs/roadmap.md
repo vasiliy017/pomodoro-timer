@@ -21,7 +21,7 @@ end and its break feel like a calm, well-designed ritual rather than a system al
 | # | Step | Source | Size | Status |
 |---|---|---|:---:|---|
 | 1 | Scaffold — the Electron + React + TypeScript skeleton boots, with tests, lint, IPC bridge, JSON store and design tokens in place | architecture-map.md §Module inventory | M | idea |
-| 2 | [Focus timer core](features/focus-timer-core/) — start, pause and reset a focus session that cycles into short and long breaks; the engine lives in main, a basic timer screen shows it | idea-brief.md §2 Problem | M | spec'd |
+| 2 | [Focus timer core](features/focus-timer-core/) — start, pause and reset a focus session that cycles into short and long breaks; the engine lives in main, a basic timer screen shows it | idea-brief.md §2 Problem | M | building |
 | 3 | Visual language — the palette (light and dark) and the motion language the rituals are built from, set as the design canon and the tokens | idea-brief.md §2 Problem | S | idea |
 | 4 | Public release — an unsigned `.dmg` on GitHub Releases, an open-source licence, and README install steps through Open Anyway | idea-brief.md §7 Recommendation | S | idea |
 | 5 | Session-end ritual — when a focus session ends, the app's own window gently appears with animation and a chime; a native notification is the fallback | idea-brief.md §7 Recommendation | M | idea |
