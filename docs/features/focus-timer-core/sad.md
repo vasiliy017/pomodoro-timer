@@ -312,6 +312,305 @@ sequenceDiagram
     R-->>U: Shows the current phase and any notice when the window is next visible
 ```
 
+### Flow 3: launch the app (AC-01, AC-03, AC-13)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as user
+    participant UI as ui
+    participant S as service
+    participant X as external-system
+    Note over U,X: Precondition: no app process runs for this macOS account (first launch, or after a quit discarded all timer state)
+    U->>X: Launches the app from the Dock or Finder
+    X->>S: Starts one app process for this account
+    S->>S: Takes the single-instance lock
+    S->>X: Reads now and the local date
+    S->>S: Builds a fresh state, ready focus session 1 of 4 at 25:00, cycle 0
+    Note over S: holds the timer state in memory only, nothing is persisted
+    S->>S: Arms one deadline at the next local midnight
+    S->>UI: Opens the single timer window
+    UI->>S: Asks for the current snapshot
+    S-->>UI: Snapshot, ready focus session 1 of 4, revision 0
+    UI->>S: Subscribes to snapshot updates
+    UI-->>U: Shows focus session 1 of 4 ready at 25:00 with Start and Restart cycle
+    alt The app is already running for this account
+        X->>S: Starts a second process
+        S->>S: The lock is taken, so the second process quits at once
+        S->>UI: The first process shows its existing window
+        UI-->>U: The same window with the current phase and remaining time, never a second window
+    else A different macOS account launches the app
+        Note over X,S: macOS starts a separate process with its own in-memory state, which cannot see or change this account's timer
+    end
+    Note over U,X: Postcondition: exactly one timer window per account, showing ready focus session 1 of 4 on a fresh launch
+```
+
+### Flow 4: pause and resume a phase, and ignore commands that don't fit (AC-02, AC-02b, AC-04)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as user
+    participant UI as ui
+    participant S as service
+    Note over U,S: Precondition: a focus session or a break is running with 12:34 left, the window shows revision r
+    U->>UI: Clicks Pause
+    UI->>S: Sends pause at revision r
+    S->>S: Checks the command shape, the revision and the allowed controls
+    S->>S: Applies pause, 12:34 remaining, revision r+1
+    Note over S: holds the paused phase in memory only, nothing is persisted
+    S->>S: Re-arms the one deadline at the next local midnight
+    S-->>UI: Snapshot, paused at 12:34, offers Resume, Reset, Skip and Restart cycle
+    S-->>UI: Outcome applied
+    UI-->>U: Shows the phase as paused at 12:34
+    Note over U,S: The pause never expires on its own, only a new day clears it (Flow 9)
+    U->>UI: Clicks Resume
+    UI->>S: Sends start at revision r+1
+    S->>S: Applies start, endsAt is now plus 12:34, revision r+2
+    S->>S: Re-arms the one deadline at endsAt
+    S-->>UI: Snapshot, running, endsAt
+    UI-->>U: Counts down from 12:34
+    alt A repeated click or a late command carries an older revision
+        UI->>S: Sends pause at revision r again
+        S->>S: The revision is stale, so nothing changes
+        S-->>UI: Outcome ignored
+        UI-->>U: Keeps showing the current snapshot
+    else The command is not offered in the current state, or is malformed
+        UI->>S: Sends a command the control table does not allow here
+        S->>S: The control table or the type guard rejects it, nothing changes
+        S-->>UI: Outcome ignored
+    end
+    Note over U,S: Postcondition: at most one phase runs, nothing is counted twice, only the offered controls are shown
+```
+
+### Flow 5: a break or the 4th focus session ends (AC-05, AC-07, AC-08, AC-09)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as user
+    participant UI as ui
+    participant S as service
+    participant X as external-system
+    Note over U,X: Precondition: focus session 4 of 4 is running with 3 completed, the Mac is awake
+    Note over S: The armed deadline at endsAt fires
+    S->>X: Reads now and the local date
+    S->>S: Counts the focus session, 4 of 4 completed, long break ready at 15:00, not running
+    Note over S: holds the new cycle count in memory only, nothing is persisted
+    S->>S: Re-arms the one deadline at the next local midnight, a ready phase has no phase deadline
+    S->>X: Posts the notification, focus session complete, long break ready
+    S->>X: Bounces the Dock icon once
+    S-->>UI: Snapshot, ready long break at 15:00, 4 of 4 completed, phase-end notice
+    Note over U,S: The ready break stays at its full length for any time, 10 minutes or 3 hours, until the User starts it
+    U->>UI: Clicks Start
+    UI->>S: Sends start at the revision on screen
+    S->>S: Starts the break, arms the deadline at endsAt
+    S-->>UI: Snapshot, running break
+    Note over S: The break's deadline fires
+    alt The running break is the long break
+        S->>S: Cycle back to 0, focus session 1 of 4 ready at 25:00
+        S->>X: Posts the notification, break over, focus session ready
+        S->>X: Bounces the Dock icon once
+        S-->>UI: Snapshot, ready focus session 1 of 4, phase-end notice
+    else The running break is a short break, reached after focus session 1, 2 or 3 (Flow 1)
+        S->>S: Cycle unchanged, the next focus session ready at 25:00
+        S->>X: Posts the notification, break over, focus session ready
+        S->>X: Bounces the Dock icon once
+        S-->>UI: Snapshot, ready focus session N of 4, phase-end notice
+    end
+    Note over U,X: Postcondition: every phase end gives one notification, one Dock bounce and a notice, and the next phase waits as a ready phase
+```
+
+### Flow 6: reset or skip a phase (AC-02b, AC-09, AC-10, AC-11)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as user
+    participant UI as ui
+    participant S as service
+    Note over U,S: Precondition: a phase is running or paused (here focus session 3 of 4 with 10:00 left and 2 completed), or a break is ready
+    U->>UI: Clicks Reset or Skip
+    UI->>S: Sends reset or skip at the revision on screen
+    S->>S: Checks the command shape, the revision and the allowed controls
+    alt Reset a running or paused phase
+        S->>S: The same phase becomes ready at its full length, 25:00, cycle still 2 completed
+    else Skip a running or paused focus session
+        S->>S: Ends it uncounted, cycle still 2 completed, a short break ready at 5:00
+    else Skip a short break, ready, running or paused
+        S->>S: The next focus session ready at 25:00, cycle unchanged
+    else Skip a long break, ready, running or paused
+        S->>S: Cycle back to 0, focus session 1 of 4 ready at 25:00
+    end
+    Note over S: holds the new phase and cycle in memory only, clears any phase-end notice
+    S->>S: Re-arms the one deadline at the next local midnight
+    S-->>UI: Snapshot with the new ready phase and its offered controls
+    S-->>UI: Outcome applied
+    UI-->>U: Shows the ready phase, with no notification and no Dock bounce
+    Note over U,S: Postcondition: only a completed focus session advances the cycle. Skip on a ready focus session and Reset on a ready phase are not offered and are ignored as in Flow 4
+```
+
+### Flow 7: restart the cycle with confirmation (AC-12)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as user
+    participant UI as ui
+    participant S as service
+    Note over U,S: Precondition: 3 completed focus sessions in the cycle, the window shows revision r
+    U->>UI: Clicks Restart cycle
+    UI->>S: Sends restartCycle at revision r, not confirmed
+    S->>S: Checks the command and works out what would be lost
+    S-->>UI: Outcome needs confirmation, 3 completed focus sessions plus the phase in progress if there is one
+    UI-->>U: Shows the in-app dialog naming what will be lost
+    alt The User confirms
+        U->>UI: Clicks Restart in the dialog
+        UI->>S: Sends restartCycle at revision r, confirmed
+        S->>S: Ends any running or paused phase uncounted, cycle 0, focus session 1 of 4 ready at 25:00
+        Note over S: holds the fresh cycle in memory only, nothing is persisted
+        S->>S: Re-arms the one deadline at the next local midnight
+        S-->>UI: Snapshot, ready focus session 1 of 4, cycle 0
+        UI-->>U: Shows focus session 1 of 4 ready at 25:00
+    else The User cancels
+        U->>UI: Clicks Cancel
+        UI-->>U: Closes the dialog, nothing is sent and nothing changes
+    else The state changed while the dialog was open
+        UI->>S: Sends restartCycle at revision r, confirmed
+        S->>S: The revision is stale, so nothing changes
+        S-->>UI: Outcome ignored
+        UI-->>U: Shows the current snapshot, the User can choose Restart cycle again
+    else Instead nothing would be lost, the cycle is at 0 and the phase is ready
+        S->>S: Applies the first, unconfirmed command at once
+        S-->>UI: Snapshot, ready focus session 1 of 4, no dialog
+    end
+    Note over U,S: Postcondition: a Restart cycle that would lose progress never takes effect without the User's confirmation, whichever window sends it
+```
+
+### Flow 8: quit the app with progress at stake (AC-13)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as user
+    participant S as service
+    participant X as external-system
+    Note over U,X: Precondition: 2 completed focus sessions and a focus session running, the timer window open or closed
+    U->>X: Chooses Quit with Cmd+Q, from the Dock or from the app menu
+    X->>S: Asks the app to quit
+    S->>S: No OS-initiated quit was signalled, works out what would be lost
+    S->>X: Shows the native confirmation naming what will be lost
+    alt The User confirms
+        U->>X: Clicks Quit in the dialog
+        X-->>S: Confirmed
+        S->>S: Lets the quit proceed, the running phase ends uncounted
+        Note over S: the in-memory timer state is discarded, nothing is persisted
+        S->>X: The process exits
+    else The User cancels
+        U->>X: Clicks Cancel in the dialog
+        X-->>S: Cancelled
+        S->>S: Prevents the quit, the phase keeps running and nothing changes
+    else Instead nothing would be lost, the cycle is at 0 and the phase is ready
+        S->>X: Quits at once without asking
+    else macOS quits the app for logout, restart or shutdown
+        X->>S: Reports shutdown before the quit request
+        S->>S: Sets the OS-quit flag
+        X->>S: Asks the app to quit
+        S->>X: Quits at once, never asks and never blocks
+    end
+    Note over U,X: Postcondition: after any quit the next launch starts fresh at ready focus session 1 of 4 with the cycle at 0 (Flow 3)
+```
+
+### Flow 9: a new day starts (AC-08, AC-15)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as user
+    participant UI as ui
+    participant S as service
+    participant X as external-system
+    Note over U,X: Precondition: the cycle began on an earlier local date, the Mac is awake
+    alt The deadline at the next local midnight fires
+        Note over S: The midnight timeout fires
+    else macOS reports a clock or time-zone change
+        X->>S: Clock changed or time zone changed
+    else Launch, wake or any command
+        Note over S: The same check runs inside every transition
+    end
+    S->>X: Reads now and the local date
+    S->>S: Compares the local date with the date the cycle began on
+    alt The current phase is ready or paused on a later date
+        S->>S: Starts a fresh cycle, focus session 1 of 4 ready at 25:00, cycle 0, a paused phase ends uncounted
+        Note over S: holds the fresh cycle in memory only, nothing is persisted
+        S-->>UI: Snapshot, ready focus session 1 of 4, cycle 0
+        UI-->>U: Shows the fresh cycle before the User can act, so a Start at 00:02 starts focus session 1 of 4
+    else A phase is running across midnight
+        S->>S: Leaves it alone, its deadline stays at endsAt
+        Note over S: At 00:10 the focus session's deadline fires
+        S->>S: Counts it as completed, then starts a fresh cycle at once, no long break even after focus session 4 of 4
+        S->>X: Posts the notification, focus session complete, focus session 1 of 4 ready
+        S->>X: Bounces the Dock icon once
+        S-->>UI: Snapshot, ready focus session 1 of 4, cycle 0, phase-end notice
+        Note over S: A break running across midnight ends into the same fresh cycle
+    else The local date has not changed
+        S->>S: Nothing changes
+    end
+    S->>S: Re-arms the one deadline at the earlier of endsAt and the next local midnight
+    Note over U,X: Postcondition: a cycle never spans two local dates while idle. A ready phase is replaced by a new day, never started by it
+```
+
+### Coverage
+
+Flows 3–9 use the generic runtime vocabulary (`user`, `ui`, `service`, `external-system` = macOS).
+The two seed flows above keep the concrete names they were drawn with at `design`.
+
+| User story | Flows |
+|---|---|
+| US-01 Start a focus session | Flow 1, Flow 3, Flow 4 (resume) |
+| US-02 Pause and resume | Flow 4 |
+| US-03 Hear when a phase ends | Flow 1, Flow 5 |
+| US-04 Start the next phase myself | Flow 1, Flow 5 |
+| US-05 Earn a long break | Flow 5 |
+| US-06 Reset or skip a phase | Flow 6 |
+| US-07 Restart the cycle | Flow 7 |
+| US-08 Close the window, keep timing | Flow 1 (close and reopen), Flow 8 (quit), Flow 3 (single window) |
+| US-09 Trust the timer across sleep | Flow 2 |
+| US-10 Start each day fresh | Flow 9, Flow 2 (sleep past midnight) |
+
+| AC | Where it is shown |
+|---|---|
+| AC-01 | Flow 1 (start, focus session 1 of 4), Flow 3 (launch shows 1 of 4), Flow 6 (a skipped or reset focus session keeps N) |
+| AC-02 | Flow 4, `alt` stale revision (repeated click, late command) |
+| AC-02b | Flow 4, `else` command not offered or malformed; Flow 6 postcondition (Skip on a ready focus session, Reset on a ready phase) |
+| AC-03 | Flow 3, `else` a different macOS account; by construction one process per account (§7) |
+| AC-04 | Flow 4, happy path |
+| AC-05 | Flow 1 (focus session ends, notification click shows the window), Flow 5 (a break ends) |
+| AC-06 | Flow 1, `else` notifications blocked or Focus on; the notice rides in every snapshot |
+| AC-07 | Flow 1 (focus session ends into a ready short break), Flow 5 (a break ends into a ready focus session) |
+| AC-08 | Flow 5 (a ready phase arms no phase deadline), Flow 9 postcondition (a new day replaces a ready phase, never starts it) |
+| AC-09 | Flow 5 (4th focus session into a long break, long break end resets the cycle), Flow 6 (`else` skip a long break) |
+| AC-10 | Flow 6, `alt` Reset |
+| AC-11 | Flow 6, `else` skip a focus session or a short break |
+| AC-12 | Flow 7, all four branches |
+| AC-13 | Flow 1 (close and reopen), Flow 8 (quit guard, OS quit), Flow 3 (next launch is fresh, never a second window) |
+| AC-14 | Flow 2 |
+| AC-15 | Flow 9 (midnight, clock change, command), Flow 2 (sleep past midnight) |
+
+**Flagged for later stages (not decided here):**
+
+- **No data store in any flow.** Every state change is held in main's memory only (spec §3). No
+  new entity, column or index, so `data-model` has no schema change to make.
+- **No async flow.** Deadlines, power events and clock notifications are in-process callbacks in
+  main, not a queue or a third-party callback. They need no idempotency key, retry or dead-letter
+  branch. Stale and repeated commands are absorbed by the revision check (ADR-0008).
+- **Reset and Skip give no notification and no Dock bounce** (Flow 6). The spec ties signals only
+  to a phase ending on time (AC-05, AC-06). This is worth a line in the spec at the next `clarify`.
+- **What the window does when a confirmed Restart cycle comes back ignored** (Flow 7, stale
+  revision) is a UI detail for `screens`: show the current snapshot and let the User choose again.
+- **Flow 8's OS-quit branch assumes `powerMonitor` `shutdown` arrives before the quit request.**
+  This is the open risk in §11. It is to be verified on logout and restart during `implement`.
+
 ## 7. Deployment view
 
 The deployment unit is unchanged. The feature ships inside the existing unsigned macOS `.dmg`
