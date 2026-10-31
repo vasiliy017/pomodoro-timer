@@ -136,7 +136,7 @@
         "src/main/window.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t07-signals-and-single-window.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T8",

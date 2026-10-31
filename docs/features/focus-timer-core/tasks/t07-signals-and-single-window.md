@@ -9,8 +9,8 @@ files_hint: ["src/main/signals.ts", "src/main/signals.test.ts", "src/main/window
 owner: "Vasiliy"
 estimate: "M"
 context_budget: "M"
-status: "todo"
-step: ""
+status: "done"
+step: "COMMIT"
 ---
 
 <!-- To the executing agent: work from what is inlined here. If a slice is insufficient, ambiguous,
