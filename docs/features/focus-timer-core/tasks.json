@@ -1,0 +1,347 @@
+{
+  "slug": "focus-timer-core",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Define the timer types, default config and pure snapshot helpers in src/shared/timer.ts",
+      "layer": "domain",
+      "deps": [],
+      "acs": [
+        "AC-01",
+        "AC-02b"
+      ],
+      "dod": "src/shared/timer.test.ts passes: the AC-02b table cell by cell, focusNumber per AC-01, remainingMs clamps, isTimerCommand accepts the 5 commands and rejects malformed payloads",
+      "files_hint": [
+        "src/shared/timer.ts",
+        "src/shared/timer.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t01-timer-types-and-helpers.md",
+      "status": "todo"
+    },
+    {
+      "id": "T2",
+      "title": "Implement transition() for the five commands with revision targeting and the control table",
+      "layer": "domain",
+      "deps": [
+        "T1"
+      ],
+      "acs": [
+        "AC-02",
+        "AC-02b",
+        "AC-04",
+        "AC-10",
+        "AC-11",
+        "AC-12"
+      ],
+      "dod": "src/shared/timer.test.ts has a passing test per AC-02, AC-02b, AC-04, AC-10, AC-11, AC-12, including every edge case above",
+      "files_hint": [
+        "src/shared/timer.ts",
+        "src/shared/timer.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t02-command-transitions.md",
+      "status": "todo"
+    },
+    {
+      "id": "T3",
+      "title": "Implement the deadline transition: phase end, cycle progression, notice and signal effects",
+      "layer": "domain",
+      "deps": [
+        "T2"
+      ],
+      "acs": [
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08",
+        "AC-09"
+      ],
+      "dod": "src/shared/timer.test.ts has a passing test per AC-05 (effects), AC-06 (notice + single bounce effect), AC-07, AC-08, AC-09 and every edge case above",
+      "files_hint": [
+        "src/shared/timer.ts",
+        "src/shared/timer.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t03-phase-end-transitions.md",
+      "status": "todo"
+    },
+    {
+      "id": "T4",
+      "title": "Implement the sleep, wake, new-day and clock-change transitions",
+      "layer": "domain",
+      "deps": [
+        "T3"
+      ],
+      "acs": [
+        "AC-14",
+        "AC-15"
+      ],
+      "dod": "src/shared/timer.test.ts has a passing test for every AC-14 and AC-15 branch and every edge case above",
+      "files_hint": [
+        "src/shared/timer.ts",
+        "src/shared/timer.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t04-sleep-wake-new-day-transitions.md",
+      "status": "todo"
+    },
+    {
+      "id": "T5",
+      "title": "Add the 10,000-sequence command-safety property test over transition()",
+      "layer": "tests",
+      "deps": [
+        "T4"
+      ],
+      "acs": [
+        "AC-02",
+        "AC-11"
+      ],
+      "dod": "src/shared/timer.property.test.ts runs 10,000 sequences in npm test and passes with 0 invariant violations",
+      "files_hint": [
+        "src/shared/timer.property.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t05-command-safety-property-test.md",
+      "status": "todo"
+    },
+    {
+      "id": "T6",
+      "title": "Add the main-process clock adapter: now, localDate and nextLocalMidnight",
+      "layer": "infra",
+      "deps": [],
+      "acs": [
+        "AC-15"
+      ],
+      "dod": "src/main/clock.test.ts passes in the node project, including the DST case",
+      "files_hint": [
+        "src/main/clock.ts",
+        "src/main/clock.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t06-clock-adapter.md",
+      "status": "todo"
+    },
+    {
+      "id": "T7",
+      "title": "Add the phase-end signals adapter and the single hide-on-close timer window",
+      "layer": "infra",
+      "deps": [
+        "T1"
+      ],
+      "acs": [
+        "AC-05",
+        "AC-06",
+        "AC-13"
+      ],
+      "dod": "src/main/signals.test.ts and src/main/window.test.ts pass in the node project",
+      "files_hint": [
+        "src/main/signals.ts",
+        "src/main/signals.test.ts",
+        "src/main/window.ts",
+        "src/main/window.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t07-signals-and-single-window.md",
+      "status": "todo"
+    },
+    {
+      "id": "T8",
+      "title": "Map powerMonitor and macOS clock / time-zone notifications to timer callbacks",
+      "layer": "infra",
+      "deps": [],
+      "acs": [
+        "AC-14",
+        "AC-15"
+      ],
+      "dod": "src/main/system-events.test.ts passes in the node project",
+      "files_hint": [
+        "src/main/system-events.ts",
+        "src/main/system-events.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t08-system-events-adapter.md",
+      "status": "todo"
+    },
+    {
+      "id": "T9",
+      "title": "Add the quit guard: native confirmation when progress would be lost, never on OS quit",
+      "layer": "app",
+      "deps": [
+        "T1"
+      ],
+      "acs": [
+        "AC-13"
+      ],
+      "dod": "src/main/quit-guard.test.ts passes: confirm → quit, cancel → prevented, empty loss → no dialog, OS-quit → no dialog, no double dialog",
+      "files_hint": [
+        "src/main/quit-guard.ts",
+        "src/main/quit-guard.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t09-quit-guard.md",
+      "status": "todo"
+    },
+    {
+      "id": "T10",
+      "title": "Build the timer service: hold state, run effects, arm one deadline, broadcast snapshots",
+      "layer": "app",
+      "deps": [
+        "T4",
+        "T6"
+      ],
+      "acs": [
+        "AC-05",
+        "AC-08",
+        "AC-15"
+      ],
+      "dod": "src/main/timer-service.test.ts passes: deadline armed at endsAt, notify + bounceDock + broadcast on fire, ready phase never starts (AC-08 at +10 min / +3 h), midnight re-arm and fresh cycle, at most one timeout and no setInterval",
+      "files_hint": [
+        "src/main/timer-service.ts",
+        "src/main/timer-service.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t10-timer-service.md",
+      "status": "todo"
+    },
+    {
+      "id": "T11",
+      "title": "Add timerGetState, timerCommand and the typed timer:state event across shared, main and preload",
+      "layer": "ports",
+      "deps": [
+        "T6",
+        "T7",
+        "T10"
+      ],
+      "acs": [
+        "AC-02",
+        "AC-12"
+      ],
+      "dod": "npm run typecheck passes with the new InvokeContract, EventContract and Api across shared, main and preload",
+      "files_hint": [
+        "src/shared/ipc.ts",
+        "src/main/ipc.ts",
+        "src/main/ipc.test.ts",
+        "src/preload/index.ts",
+        "src/main/index.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t11-ipc-timer-contract.md",
+      "status": "todo"
+    },
+    {
+      "id": "T12",
+      "title": "Add the useTimerState hook: subscribe, pull, keep the newest revision, count down while visible",
+      "layer": "ui",
+      "deps": [
+        "T11"
+      ],
+      "acs": [
+        "AC-04",
+        "AC-13"
+      ],
+      "dod": "src/renderer/src/hooks/useTimerState.test.tsx passes: highest-revision rule both orders, correct value on the first render after becoming visible, no interval while hidden or paused, commands carry the held revision",
+      "files_hint": [
+        "src/renderer/src/hooks/useTimerState.ts",
+        "src/renderer/src/hooks/useTimerState.test.tsx"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t12-use-timer-state-hook.md",
+      "status": "todo"
+    },
+    {
+      "id": "T13",
+      "title": "Build the TimerScreen: phase, N of 4, countdown, notice and the offered controls",
+      "layer": "ui",
+      "deps": [
+        "T12"
+      ],
+      "acs": [
+        "AC-01",
+        "AC-02b",
+        "AC-06"
+      ],
+      "dod": "src/renderer/src/screens/TimerScreen.test.tsx passes: AC-01 labels, every AC-02b row's buttons (no others rendered), AC-06 notice text",
+      "files_hint": [
+        "src/renderer/src/screens/TimerScreen.tsx",
+        "src/renderer/src/screens/TimerScreen.module.css",
+        "src/renderer/src/screens/TimerScreen.test.tsx",
+        "src/renderer/src/components/ui/Button.tsx",
+        "src/renderer/src/components/ui/Button.module.css",
+        "src/renderer/src/App.tsx",
+        "src/renderer/src/App.module.css",
+        "src/renderer/src/styles/tokens.css",
+        "e2e/boot.spec.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t13-timer-screen.md",
+      "status": "todo"
+    },
+    {
+      "id": "T14",
+      "title": "Add the in-app Restart-cycle confirmation dialog naming what will be lost",
+      "layer": "ui",
+      "deps": [
+        "T13"
+      ],
+      "acs": [
+        "AC-12"
+      ],
+      "dod": "TimerScreen.test.tsx + Dialog.test.tsx pass: confirm, cancel (no second command sent), stale, nothing-to-lose (no dialog)",
+      "files_hint": [
+        "src/renderer/src/screens/TimerScreen.tsx",
+        "src/renderer/src/screens/TimerScreen.test.tsx",
+        "src/renderer/src/components/ui/Dialog.tsx",
+        "src/renderer/src/components/ui/Dialog.module.css",
+        "src/renderer/src/components/ui/Dialog.test.tsx"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t14-restart-cycle-dialog.md",
+      "status": "todo"
+    },
+    {
+      "id": "T15",
+      "title": "Wire main: single-instance lock, timer window, system events, quit guard, test config and App Nap opt-out",
+      "layer": "wiring",
+      "deps": [
+        "T7",
+        "T8",
+        "T9",
+        "T10",
+        "T11"
+      ],
+      "acs": [
+        "AC-03",
+        "AC-13"
+      ],
+      "dod": "npm run build succeeds and the app launches with npm run dev showing focus session 1 of 4 ready",
+      "files_hint": [
+        "src/main/index.ts",
+        "electron-builder.yml"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t15-main-wiring.md",
+      "status": "todo"
+    },
+    {
+      "id": "T16",
+      "title": "Add Playwright end-to-end tests for launch time, control latency and hidden-window phase end",
+      "layer": "tests",
+      "deps": [
+        "T14",
+        "T15"
+      ],
+      "acs": [
+        "AC-01",
+        "AC-05",
+        "AC-13"
+      ],
+      "dod": "npm run test:e2e passes locally with launch ≤ 2 s, every control ≤ 100 ms, hidden-window phase end ≤ 1 s, single window after reopen",
+      "files_hint": [
+        "e2e/boot.spec.ts",
+        "e2e/timer.spec.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t16-e2e-timer-flows.md",
+      "status": "todo"
+    },
+    {
+      "id": "T17",
+      "title": "Mark repo ADR-0002 partially superseded and write the packaged-app verification checklist",
+      "layer": "docs",
+      "deps": [],
+      "acs": [],
+      "dod": "repo ADR-0002 carries the note with working relative links",
+      "files_hint": [
+        "docs/adr/0002-run-the-timer-engine-in-the-main-process.md",
+        "docs/features/focus-timer-core/verification.md"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t17-docs-adr-note-and-device-checklist.md",
+      "status": "todo"
+    }
+  ]
+}
