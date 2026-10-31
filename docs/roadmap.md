@@ -21,7 +21,7 @@ end and its break feel like a calm, well-designed ritual rather than a system al
 | # | Step | Source | Size | Status |
 |---|---|---|:---:|---|
 | 1 | Scaffold — the Electron + React + TypeScript skeleton boots, with tests, lint, IPC bridge, JSON store and design tokens in place | architecture-map.md §Module inventory | M | idea |
-| 2 | Focus timer core — start, pause and reset a focus session that cycles into short and long breaks; the engine lives in main, a basic timer screen shows it | idea-brief.md §2 Problem | M | idea |
+| 2 | [Focus timer core](features/focus-timer-core/) — start, pause and reset a focus session that cycles into short and long breaks; the engine lives in main, a basic timer screen shows it | idea-brief.md §2 Problem | M | spec'd |
 | 3 | Visual language — the palette (light and dark) and the motion language the rituals are built from, set as the design canon and the tokens | idea-brief.md §2 Problem | S | idea |
 | 4 | Public release — an unsigned `.dmg` on GitHub Releases, an open-source licence, and README install steps through Open Anyway | idea-brief.md §7 Recommendation | S | idea |
 | 5 | Session-end ritual — when a focus session ends, the app's own window gently appears with animation and a chime; a native notification is the fallback | idea-brief.md §7 Recommendation | M | idea |
@@ -52,7 +52,6 @@ end and its break feel like a calm, well-designed ritual rather than a system al
 | D2 | Which open-source licence does the repo ship under? | grilling | human | 4 |
 | D3 | Does an unsigned build open on the owner's current macOS through Privacy & Security → Open Anyway, exactly as the README will describe? | prototype | human | 4 |
 | D4 | Keep a per-file provenance record (source URL + CC0 confirmation) next to every bundled sound | task | agent | 5, 8 |
-| D5 | How many weeks of daily use count as success? | grilling | human | — |
 
 ## Decisions so far
 
@@ -65,6 +64,7 @@ end and its break feel like a calm, well-designed ritual rather than a system al
 - Bundled audio comes from Freesound, CC0 sounds only; Pixabay is excluded (its licence forbids standalone redistribution) → [Freesound FAQ](https://freesound.org/help/faq/)
 - The session-end chime belongs to Session-end ritual; Ambient audio covers ambience only → this roadmap, [Steps](#steps)
 - Public release ships right after Focus timer core instead of waiting for the full v1 → this roadmap, [Execution path](#execution-path)
+- Success = the owner uses the app every working day for 4 weeks without going back to a previous timer → [`features/focus-timer-core/spec.md` §7](features/focus-timer-core/spec.md)
 
 ## Dependency graph
 
