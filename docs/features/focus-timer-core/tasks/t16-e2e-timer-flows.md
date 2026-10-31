@@ -9,8 +9,8 @@ files_hint: ["e2e/boot.spec.ts", "e2e/timer.spec.ts"]
 owner: "Vasiliy"
 estimate: "M"
 context_budget: "M"
-status: "todo"
-step: ""
+status: "done"
+step: "COMMIT"
 ---
 
 <!-- To the executing agent: work from what is inlined here. If a slice is insufficient, ambiguous,

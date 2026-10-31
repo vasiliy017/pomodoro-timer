@@ -8,6 +8,7 @@ test('the app boots to focus session 1 of 4, ready at 25:00, through the IPC bri
   // Hosts built on Electron (VS Code and its terminals) export ELECTRON_RUN_AS_NODE=1, which would
   // start the app as plain Node.
   const { ELECTRON_RUN_AS_NODE: _runAsNode, ...env } = process.env
+  const launchedAt = Date.now()
   const app = await electron.launch({
     args: ['.', `--user-data-dir=${userData}`],
     env: env as Record<string, string>
@@ -20,6 +21,9 @@ test('the app boots to focus session 1 of 4, ready at 25:00, through the IPC bri
     await expect(window.getByRole('heading', { name: 'Focus session 1 of 4' })).toBeVisible()
     await expect(window.getByRole('timer')).toHaveText('25:00')
     await expect(window.getByRole('button', { name: 'Start', exact: true })).toBeVisible()
+    // spec.md §6: a cold launch shows the ready focus session within 2 s.
+    const launchMs = Date.now() - launchedAt
+    expect(launchMs, `launch took ${launchMs} ms`).toBeLessThanOrEqual(2_000)
 
     // The page sees only the bridge: no Node globals (nodeIntegration off, sandbox, isolation).
     const pageGlobals = await window.evaluate(() => ({

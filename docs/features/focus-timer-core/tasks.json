@@ -327,7 +327,7 @@
         "e2e/timer.spec.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t16-e2e-timer-flows.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T17",
