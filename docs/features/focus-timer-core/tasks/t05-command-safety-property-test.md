@@ -9,8 +9,8 @@ files_hint: ["src/shared/timer.property.test.ts"]
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: ""
+status: "done"
+step: "COMMIT"
 ---
 
 <!-- To the executing agent: work from what is inlined here. If a slice is insufficient, ambiguous,

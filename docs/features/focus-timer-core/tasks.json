@@ -98,7 +98,7 @@
         "src/shared/timer.property.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t05-command-safety-property-test.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T6",
