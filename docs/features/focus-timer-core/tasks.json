@@ -306,7 +306,7 @@
         "electron-builder.yml"
       ],
       "file": "docs/features/focus-timer-core/tasks/t15-main-wiring.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T16",

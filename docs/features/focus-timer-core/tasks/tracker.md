@@ -22,7 +22,7 @@
 | T12 | Add the useTimerState hook | ui | Vasiliy | S | T11 | done | COMMIT |
 | T13 | Build the TimerScreen | ui | Vasiliy | M | T12 | done | COMMIT |
 | T14 | Add the Restart-cycle confirmation dialog | ui | Vasiliy | S | T13 | done | COMMIT |
-| T15 | Wire main and opt out of App Nap | wiring | Vasiliy | M | T7, T8, T9, T10, T11 | todo | — |
+| T15 | Wire main and opt out of App Nap | wiring | Vasiliy | M | T7, T8, T9, T10, T11 | done | COMMIT |
 | T16 | Add end-to-end timing tests | tests | Vasiliy | M | T14, T15 | todo | — |
 | T17 | Mark repo ADR-0002 partially superseded; write the device checklist | docs | Vasiliy | S | — | todo | — |
 

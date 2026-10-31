@@ -17,6 +17,9 @@ mac:
   # v1 ships unsigned (ADR-0001, idea-brief §7): no signing identity, no notarization.
   identity: null
   notarize: false
+  extendInfo:
+    # Keeps the one deadline timeout on time with the window closed (ADR-0004, focus-timer-core).
+    NSAppSleepDisabled: true
 dmg:
   sign: false
 publish: null
