@@ -1,0 +1,22 @@
+appId: dev.pomodoro-timer.app
+productName: Pomodoro Timer
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+asar: true
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+  # v1 ships unsigned (ADR-0001, idea-brief §7): no signing identity, no notarization.
+  identity: null
+  notarize: false
+dmg:
+  sign: false
+publish: null

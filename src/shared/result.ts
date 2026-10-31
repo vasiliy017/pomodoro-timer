@@ -1,0 +1,13 @@
+/**
+ * The typed outcome every IPC handler returns. Expected failures are values, not exceptions,
+ * so the renderer always gets a shape it can render.
+ */
+export type Result<T> = { ok: true; value: T } | { ok: false; error: string }
+
+export function ok<T>(value: T): Result<T> {
+  return { ok: true, value }
+}
+
+export function err<T = never>(error: string): Result<T> {
+  return { ok: false, error }
+}

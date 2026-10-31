@@ -1,0 +1,70 @@
+/*
+ * Design tokens — the only place raw values live. Components reference these custom properties
+ * from their *.module.css files. The palette is a placeholder until the Visual language step
+ * sets the real one (docs/roadmap.md).
+ */
+:root {
+  color-scheme: light dark;
+
+  /* color — light */
+  --color-bg: #f6f1ea;
+  --color-surface: #fffaf3;
+  --color-text: #2b2622;
+  --color-text-muted: #7a6f66;
+  --color-accent: #d9644a;
+  --color-accent-soft: #f2c9bb;
+  --color-border: #e6dccf;
+
+  /* spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  --font-size-sm: 13px;
+  --font-size-md: 15px;
+  --font-size-lg: 20px;
+  --font-size-xl: 32px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 600;
+  --line-height: 1.45;
+
+  /* motion — durations in ms for JS (Motion) and CSS alike */
+  --motion-duration-fast: 160ms;
+  --motion-duration-base: 320ms;
+  --motion-duration-slow: 720ms;
+  --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1d1a18;
+    --color-surface: #272320;
+    --color-text: #f1e9df;
+    --color-text-muted: #a3978c;
+    --color-accent: #ef8a6f;
+    --color-accent-soft: #5a3428;
+    --color-border: #3a3430;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast: 0ms;
+    --motion-duration-base: 0ms;
+    --motion-duration-slow: 0ms;
+  }
+}
