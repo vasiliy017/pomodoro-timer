@@ -11,7 +11,7 @@
 | T1 | Define the timer types, default config and pure snapshot helpers | domain | Vasiliy | M | — | done | COMMIT |
 | T2 | Implement transition() for the five commands | domain | Vasiliy | M | T1 | done | COMMIT |
 | T3 | Implement the deadline transition | domain | Vasiliy | M | T2 | done | COMMIT |
-| T4 | Implement sleep, wake, new-day and clock-change transitions | domain | Vasiliy | M | T3 | todo | — |
+| T4 | Implement sleep, wake, new-day and clock-change transitions | domain | Vasiliy | M | T3 | done | COMMIT |
 | T5 | Add the 10,000-sequence command-safety property test | tests | Vasiliy | S | T4 | todo | — |
 | T6 | Add the main-process clock adapter | infra | Vasiliy | S | — | todo | — |
 | T7 | Add the phase-end signals adapter and the single timer window | infra | Vasiliy | M | T1 | todo | — |

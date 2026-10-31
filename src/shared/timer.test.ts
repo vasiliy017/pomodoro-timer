@@ -11,6 +11,7 @@ import {
   type PhaseKind,
   type PhaseStatus,
   type TimerCommand,
+  type TimerInput,
   type TimerState
 } from './timer'
 
@@ -28,6 +29,10 @@ function command(s: TimerState, cmd: TimerCommand, now = T0, localDate = TODAY) 
 
 function deadline(s: TimerState, now: number, localDate = TODAY) {
   return transition(s, { kind: 'deadline' }, now, localDate, DEFAULT_TIMER_CONFIG)
+}
+
+function send(s: TimerState, input: TimerInput, now: number, localDate = TODAY) {
+  return transition(s, input, now, localDate, DEFAULT_TIMER_CONFIG)
 }
 
 /** A running focus session with `leftMs` to go at T0. */
@@ -697,5 +702,237 @@ describe('transition — deadline (phase end)', () => {
         next: { phase: 'focus', focusNumber: 1 }
       })
     })
+  })
+})
+
+describe('transition — sleep and wake (AC-14)', () => {
+  const HOUR = 60 * MIN
+  const sleep = { kind: 'sleep' } as const
+  const wake = { kind: 'wake' } as const
+
+  function asleep(s: TimerState, at = T0) {
+    return send(s, sleep, at).state
+  }
+
+  it('sleep records sleptAt on a running phase, nothing visible changes', () => {
+    const s = runningFocus(15 * MIN, { completedInCycle: 1 })
+    const r = send(s, sleep, T0)
+    expect(r.state).toMatchObject({ status: 'running', sleptAt: T0, revision: 5 })
+    expect(r.effects).toEqual([])
+  })
+
+  it('focus with 15:00 left, asleep 2 h: ended while asleep, not counted, short break ready, one notify', () => {
+    const s = asleep(runningFocus(15 * MIN, { completedInCycle: 1 }))
+    const r = send(s, wake, T0 + 2 * HOUR)
+    const notice = { kind: 'endedWhileAsleep', endedPhase: 'focus', counted: false }
+    expect(r.state).toMatchObject({
+      phase: 'shortBreak',
+      status: 'ready',
+      completedInCycle: 1,
+      sleptAt: null,
+      notice
+    })
+    expect(r.effects).toEqual([
+      { kind: 'notify', notice, next: { phase: 'shortBreak', focusNumber: null } },
+      { kind: 'bounceDock' }
+    ])
+  })
+
+  it('asleep 5 min with 15:00 left: still running with 10:00 left, no effects', () => {
+    const s = asleep(runningFocus(15 * MIN))
+    const r = send(s, wake, T0 + 5 * MIN)
+    expect(r.state).toMatchObject({ status: 'running', phase: 'focus', sleptAt: null })
+    expect(r.effects).toEqual([])
+    expect(toSnapshot(r.state, T0 + 5 * MIN, DEFAULT_TIMER_CONFIG).remainingMs).toBe(10 * MIN)
+  })
+
+  it('a focus session whose end came before the sleep counts, even if noticed late', () => {
+    const s = asleep(runningFocus(0, { completedInCycle: 1 }), T0 + 2_000)
+    const r = send(s, wake, T0 + HOUR)
+    expect(r.state).toMatchObject({ phase: 'shortBreak', completedInCycle: 2 })
+    expect(r.state.notice).toEqual({ kind: 'phaseEnded', endedPhase: 'focus', counted: true })
+  })
+
+  it("a short break's end passed while asleep: focus ready at 25:00, cycle unchanged", () => {
+    const s = asleep(
+      state({
+        phase: 'shortBreak',
+        durationMs: 5 * MIN,
+        status: 'running',
+        endsAt: T0 + MIN,
+        completedInCycle: 2
+      })
+    )
+    const r = send(s, wake, T0 + HOUR)
+    expect(r.state).toMatchObject({
+      phase: 'focus',
+      status: 'ready',
+      durationMs: 25 * MIN,
+      completedInCycle: 2
+    })
+    expect(r.state.notice).toEqual({
+      kind: 'endedWhileAsleep',
+      endedPhase: 'shortBreak',
+      counted: false
+    })
+    expect(r.effects.filter((e) => e.kind === 'notify')).toHaveLength(1)
+  })
+
+  it("a long break's end passed while asleep: cycle 0, focus 1 of 4 ready", () => {
+    const s = asleep(
+      state({
+        phase: 'longBreak',
+        durationMs: 15 * MIN,
+        status: 'running',
+        endsAt: T0 + MIN,
+        completedInCycle: 4
+      })
+    )
+    const r = send(s, wake, T0 + HOUR)
+    expect(r.state).toMatchObject({ phase: 'focus', status: 'ready', completedInCycle: 0 })
+    expect(r.state.notice).toMatchObject({ kind: 'endedWhileAsleep', endedPhase: 'longBreak' })
+  })
+
+  it('a paused phase is untouched by sleep', () => {
+    const s = state({ status: 'paused', remainingMs: 7 * MIN, revision: 2 })
+    const slept = send(s, sleep, T0)
+    expect(slept.state).toBe(s)
+    const woke = send(slept.state, wake, T0 + 2 * HOUR)
+    expect(woke.state).toBe(s)
+    expect(woke.effects).toEqual([])
+  })
+
+  it('a deadline while asleep (Power Nap) is ignored', () => {
+    const s = asleep(runningFocus(MIN))
+    const r = send(s, { kind: 'deadline' }, T0 + 2 * MIN)
+    expect(r.state).toBe(s)
+    expect(r.effects).toEqual([])
+  })
+
+  it('wake without a prior sleep behaves as a deadline: no uncounted branch', () => {
+    const r = send(runningFocus(MIN, { completedInCycle: 1 }), wake, T0 + HOUR)
+    expect(r.state).toMatchObject({ phase: 'shortBreak', completedInCycle: 2 })
+    expect(r.state.notice).toMatchObject({ kind: 'phaseEnded', counted: true })
+  })
+
+  it('focus running at 23:50, asleep until 08:00: uncounted notice, then a fresh cycle, one notify', () => {
+    const s = asleep(runningFocus(15 * MIN, { completedInCycle: 2 }))
+    const r = send(s, wake, T0 + 8 * HOUR, '2026-11-01')
+    const notice = { kind: 'endedWhileAsleep', endedPhase: 'focus', counted: false }
+    expect(r.state).toMatchObject({
+      phase: 'focus',
+      status: 'ready',
+      durationMs: 25 * MIN,
+      completedInCycle: 0,
+      cycleDate: '2026-11-01',
+      notice
+    })
+    expect(r.effects).toEqual([
+      { kind: 'notify', notice, next: { phase: 'focus', focusNumber: 1 } },
+      { kind: 'bounceDock' }
+    ])
+  })
+})
+
+describe('transition — new day (AC-15)', () => {
+  const TOMORROW = '2026-11-01'
+
+  it("yesterday's paused focus 4 of 4 (3 completed) becomes focus 1 of 4 ready, cycle 0, uncounted", () => {
+    const s = state({ status: 'paused', remainingMs: 14 * MIN + 7_000, completedInCycle: 3 })
+    const r = send(s, { kind: 'clockChanged' }, T0, TOMORROW)
+    expect(r.outcome).toEqual({ kind: 'applied' })
+    expect(r.state).toMatchObject({
+      phase: 'focus',
+      status: 'ready',
+      durationMs: 25 * MIN,
+      completedInCycle: 0,
+      cycleDate: TOMORROW,
+      remainingMs: null,
+      notice: null,
+      revision: 1
+    })
+    expect(r.effects).toEqual([])
+  })
+
+  it('the midnight deadline replaces a ready break with a fresh cycle, never starts it', () => {
+    const s = state({
+      phase: 'shortBreak',
+      durationMs: 5 * MIN,
+      completedInCycle: 2,
+      notice: { kind: 'phaseEnded', endedPhase: 'focus', counted: true }
+    })
+    const r = send(s, { kind: 'deadline' }, T0, TOMORROW)
+    expect(r.state).toMatchObject({ phase: 'focus', status: 'ready', completedInCycle: 0 })
+    expect(r.state.notice).toBeNull()
+  })
+
+  it("a Start at 00:02 carrying yesterday's revision never starts yesterday's ready break", () => {
+    const s = state({ phase: 'shortBreak', durationMs: 5 * MIN, completedInCycle: 1, revision: 4 })
+    const r = command(s, { type: 'start', revision: 4 }, T0, TOMORROW)
+    expect(r.outcome).toEqual({ kind: 'ignored', reason: 'staleRevision' })
+    expect(r.state).toMatchObject({
+      phase: 'focus',
+      status: 'ready',
+      completedInCycle: 0,
+      revision: 5
+    })
+  })
+
+  it('a phase running across midnight is left alone', () => {
+    const s = runningFocus(10 * MIN, { completedInCycle: 3 })
+    const r = send(s, { kind: 'clockChanged' }, T0, TOMORROW)
+    expect(r.state).toBe(s)
+    const midnight = send(s, { kind: 'deadline' }, T0 + MIN, TOMORROW)
+    expect(midnight.state).toBe(s)
+  })
+
+  it('focus 4 of 4 runs out at 00:10: counted, then a fresh cycle, no long break', () => {
+    const s = runningFocus(10 * MIN, { completedInCycle: 3 })
+    const r = send(s, { kind: 'deadline' }, T0 + 10 * MIN, TOMORROW)
+    const notice = { kind: 'phaseEnded', endedPhase: 'focus', counted: true }
+    expect(r.state).toMatchObject({
+      phase: 'focus',
+      status: 'ready',
+      completedInCycle: 0,
+      cycleDate: TOMORROW,
+      notice
+    })
+    expect(r.effects).toEqual([
+      { kind: 'notify', notice, next: { phase: 'focus', focusNumber: 1 } },
+      { kind: 'bounceDock' }
+    ])
+  })
+
+  it('a break running across midnight ends into the same fresh cycle', () => {
+    const s = state({
+      phase: 'shortBreak',
+      durationMs: 5 * MIN,
+      status: 'running',
+      endsAt: T0,
+      completedInCycle: 2
+    })
+    const r = send(s, { kind: 'deadline' }, T0, TOMORROW)
+    expect(r.state).toMatchObject({ phase: 'focus', completedInCycle: 0, cycleDate: TOMORROW })
+    expect(r.effects.filter((e) => e.kind === 'notify')).toHaveLength(1)
+  })
+
+  it('the clock moved back one hour on a running phase: remaining never exceeds the full length', () => {
+    const s = runningFocus(25 * MIN)
+    const r = send(s, { kind: 'clockChanged' }, T0 - 60 * MIN)
+    expect(r.state).toBe(s)
+    expect(toSnapshot(r.state, T0 - 60 * MIN, DEFAULT_TIMER_CONFIG).remainingMs).toBe(25 * MIN)
+  })
+
+  it('the clock moved back to yesterday after a fresh cycle: no new-day reset', () => {
+    const s = state({ completedInCycle: 1, cycleDate: TOMORROW })
+    const r = send(s, { kind: 'clockChanged' }, T0, TODAY)
+    expect(r.state).toBe(s)
+  })
+
+  it('nothing changes when the local date has not changed', () => {
+    const s = state({ phase: 'shortBreak', durationMs: 5 * MIN, completedInCycle: 1 })
+    const r = send(s, { kind: 'clockChanged' }, T0)
+    expect(r.state).toBe(s)
+    expect(r.outcome).toEqual({ kind: 'ignored', reason: 'notAllowed' })
   })
 })

@@ -200,14 +200,21 @@ export function isTimerCommand(value: unknown): value is TimerCommand {
 }
 
 /**
- * What can happen to the timer. Commands come from the window; `deadline` is main's armed
- * timeout reaching a running phase's `endsAt` (ADR-0003).
+ * What can happen to the timer. Commands come from the window. The rest come from main:
+ * `deadline` is the armed timeout (the running phase's `endsAt` or local midnight, ADR-0003),
+ * `sleep` / `wake` are powerMonitor suspend / resume (ADR-0005), and `clockChanged` is a macOS
+ * clock or time-zone change.
  */
-export type TimerInput = { kind: 'command'; command: TimerCommand } | { kind: 'deadline' }
+export type TimerInput =
+  | { kind: 'command'; command: TimerCommand }
+  | { kind: 'deadline' }
+  | { kind: 'sleep' }
+  | { kind: 'wake' }
+  | { kind: 'clockChanged' }
 
 /**
- * Side effects main carries out after a transition, in order. Every phase end gives one `notify`
- * then one `bounceDock` (AC-05, AC-06). Commands have none.
+ * Side effects main carries out after a transition, in order. A phase end gives one `notify`
+ * then one `bounceDock` (AC-05, AC-06), never more per transition. Commands have none.
  */
 export type TimerEffect =
   | {
@@ -218,7 +225,10 @@ export type TimerEffect =
     }
   | { kind: 'bounceDock' }
 
-/** How the rules judged an input. Main turns it into a `CommandOutcome` with a snapshot. */
+/**
+ * How the rules judged an input. Main turns it into a `CommandOutcome` with a snapshot. A system
+ * input that changes nothing is `ignored` / `notAllowed`.
+ */
 export type RuleOutcome =
   | { kind: 'applied' }
   | { kind: 'ignored'; reason: Exclude<IgnoredReason, 'malformed'> }
@@ -232,7 +242,10 @@ export interface TransitionResult {
 
 /**
  * The one entry point of the rules (ADR-0001). `now` is epoch ms and `localDate` the Mac's local
- * `YYYY-MM-DD`; both come from main's clock. An ignored input returns the same state object.
+ * `YYYY-MM-DD`; both come from main's clock. An input that changes nothing returns the same state
+ * object. The new-day rule (AC-15) runs in every transition: before a command is judged, so a
+ * command aimed at yesterday's phase is stale, and after a system input, so a sleep result or a
+ * phase end applies first.
  */
 export function transition(
   state: TimerState,
@@ -241,27 +254,73 @@ export function transition(
   localDate: string,
   config: TimerConfig
 ): TransitionResult {
+  if (input.kind === 'command') {
+    return applyCommand(
+      startNewDay(state, localDate, config),
+      input.command,
+      now,
+      localDate,
+      config
+    )
+  }
+
+  const settled = applySystemInput(state, input, now, localDate, config)
+  // Only a phase end bumps the revision here; sleep and wake-while-running change nothing visible.
+  const endedNotice = settled.revision !== state.revision ? settled.notice : null
+  let next = startNewDay(settled, localDate, config)
+  // A phase that ended in this transition keeps its notice through a new-day reset.
+  if (endedNotice && next !== settled) next = { ...next, notice: endedNotice }
+  if (next === state) return ignored(state, 'notAllowed')
+
+  const effects: TimerEffect[] = []
+  if (endedNotice) {
+    const focusNumber = next.phase === 'focus' ? next.completedInCycle + 1 : null
+    effects.push(
+      { kind: 'notify', notice: endedNotice, next: { phase: next.phase, focusNumber } },
+      { kind: 'bounceDock' }
+    )
+  }
+  return { state: next, effects, outcome: { kind: 'applied' } }
+}
+
+function applySystemInput(
+  state: TimerState,
+  input: Exclude<TimerInput, { kind: 'command' }>,
+  now: number,
+  localDate: string,
+  config: TimerConfig
+): TimerState {
+  if (state.status !== 'running' || state.endsAt === null) return state
   switch (input.kind) {
-    case 'command':
-      return applyCommand(state, input.command, now, localDate, config)
     case 'deadline':
-      if (state.status !== 'running' || state.endsAt === null || now < state.endsAt) {
-        return ignored(state, 'notAllowed')
-      }
+      // While asleep a deadline is a Power Nap wake: the wake input settles the phase instead.
+      if (state.sleptAt !== null || now < state.endsAt) return state
       return endPhase(state, 'phaseEnded', localDate, config)
+    case 'sleep':
+      return state.sleptAt === null ? { ...state, sleptAt: now } : state
+    case 'wake': {
+      const { sleptAt, endsAt } = state
+      const awake = sleptAt === null ? state : { ...state, sleptAt: null }
+      if (now < endsAt) return awake
+      // Counted only when the end came no later than the moment the Mac went to sleep (AC-14).
+      const endedAsleep = sleptAt !== null && endsAt > sleptAt
+      return endPhase(awake, endedAsleep ? 'endedWhileAsleep' : 'phaseEnded', localDate, config)
+    }
+    case 'clockChanged':
+      return state
   }
 }
 
 /**
  * Settles the end of the running phase: only a focus session that ran out while the Mac was awake
- * counts (AC-07); the next phase waits ready (AC-08). Emits one notification and one Dock bounce.
+ * counts (AC-07); the next phase waits ready (AC-08) with the phase-end notice.
  */
 function endPhase(
   state: TimerState,
   kind: Notice['kind'],
   localDate: string,
   config: TimerConfig
-): TransitionResult {
+): TimerState {
   const counted = state.phase === 'focus' && kind === 'phaseEnded'
   const completedInCycle = state.completedInCycle + (counted ? 1 : 0)
   let next: Partial<TimerState>
@@ -271,14 +330,16 @@ function endPhase(
   else next = readyPhase('shortBreak', config)
 
   const notice: Notice = { kind, endedPhase: state.phase, counted }
-  const result = applied(state, { completedInCycle, ...next, notice })
-  const { phase } = result.state
-  const focusNumber = phase === 'focus' ? result.state.completedInCycle + 1 : null
-  result.effects = [
-    { kind: 'notify', notice, next: { phase, focusNumber } },
-    { kind: 'bounceDock' }
-  ]
-  return result
+  return applied(state, { completedInCycle, ...next, notice }).state
+}
+
+/**
+ * The new-day rule (AC-15): a cycle belongs to the local date it began on. A phase that is not
+ * running on a later date gives way to a fresh cycle; a running phase is left alone until it ends.
+ */
+function startNewDay(state: TimerState, localDate: string, config: TimerConfig): TimerState {
+  if (state.status === 'running' || localDate <= state.cycleDate) return state
+  return applied(state, freshCycle(localDate, config)).state
 }
 
 function applyCommand(

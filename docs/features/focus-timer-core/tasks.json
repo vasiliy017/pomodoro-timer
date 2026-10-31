@@ -80,7 +80,7 @@
         "src/shared/timer.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t04-sleep-wake-new-day-transitions.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T5",
