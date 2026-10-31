@@ -12,6 +12,12 @@ ticket: ""
 - **Status:** Accepted
 - **Date:** 2026-10-31
 - **Deciders:** Vasiliy (owner), with Claude during the greenfield `survey` session
+- **Partially superseded (2026-10-31):** the menu-bar icon / tray assumptions are superseded by
+  [focus-timer-core ADR-0009](../features/focus-timer-core/adr/0009-hide-the-single-timer-window-on-close.md)
+  (no tray in v1; window + Dock only). The claim that clock jumps cause no drift is superseded by
+  [focus-timer-core ADR-0002](../features/focus-timer-core/adr/0002-trust-the-wall-clock-with-clamps.md)
+  (wall clock with clamps; a forward jump can end a phase). The core decision, engine in main with
+  pure rules in `src/shared`, stands.
 
 ## Context
 
