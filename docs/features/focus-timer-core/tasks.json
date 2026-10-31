@@ -39,7 +39,7 @@
         "src/shared/timer.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t02-command-transitions.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T3",

@@ -198,3 +198,116 @@ export function isTimerCommand(value: unknown): value is TimerCommand {
   if (type === 'restartCycle') return typeof confirmed === 'boolean'
   return typeof type === 'string' && SIMPLE_COMMANDS.includes(type)
 }
+
+/** What can happen to the timer. Commands come from the window; T3/T4 add the system inputs. */
+export type TimerInput = { kind: 'command'; command: TimerCommand }
+
+/** Side effects main carries out after a transition. Commands have none. */
+export type TimerEffect = never
+
+/** How the rules judged an input. Main turns it into a `CommandOutcome` with a snapshot. */
+export type RuleOutcome =
+  | { kind: 'applied' }
+  | { kind: 'ignored'; reason: Exclude<IgnoredReason, 'malformed'> }
+  | { kind: 'needsConfirmation'; loss: RestartLoss }
+
+export interface TransitionResult {
+  state: TimerState
+  effects: TimerEffect[]
+  outcome: RuleOutcome
+}
+
+/**
+ * The one entry point of the rules (ADR-0001). `now` is epoch ms and `localDate` the Mac's local
+ * `YYYY-MM-DD`; both come from main's clock. An ignored input returns the same state object.
+ */
+export function transition(
+  state: TimerState,
+  input: TimerInput,
+  now: number,
+  localDate: string,
+  config: TimerConfig
+): TransitionResult {
+  return applyCommand(state, input.command, now, localDate, config)
+}
+
+function applyCommand(
+  state: TimerState,
+  command: TimerCommand,
+  now: number,
+  localDate: string,
+  config: TimerConfig
+): TransitionResult {
+  if (command.revision !== state.revision) return ignored(state, 'staleRevision')
+  if (!allowedControls(state.phase, state.status)[command.type]) return ignored(state, 'notAllowed')
+
+  switch (command.type) {
+    case 'start':
+      return applied(state, {
+        status: 'running',
+        endsAt: now + (state.status === 'paused' ? remainingMsAt(state, now) : state.durationMs),
+        remainingMs: null
+      })
+    case 'pause':
+      return applied(state, {
+        status: 'paused',
+        remainingMs: remainingMsAt(state, now),
+        endsAt: null,
+        sleptAt: null
+      })
+    case 'reset':
+      return applied(state, readyPhase(state.phase, config))
+    case 'skip':
+      return applied(state, phaseAfterSkip(state, localDate, config))
+    case 'restartCycle': {
+      const loss = restartLoss(state)
+      if (!command.confirmed && !isRestartLossEmpty(loss)) {
+        return { state, effects: [], outcome: { kind: 'needsConfirmation', loss } }
+      }
+      return applied(state, freshCycle(localDate, config))
+    }
+  }
+}
+
+function phaseAfterSkip(
+  state: TimerState,
+  localDate: string,
+  config: TimerConfig
+): Partial<TimerState> {
+  switch (state.phase) {
+    case 'focus':
+      // A skipped focus session never counts (AC-11), so it always leads to a short break.
+      return readyPhase('shortBreak', config)
+    case 'shortBreak':
+      return readyPhase('focus', config)
+    case 'longBreak':
+      return freshCycle(localDate, config)
+  }
+}
+
+function readyPhase(phase: PhaseKind, config: TimerConfig): Partial<TimerState> {
+  return {
+    phase,
+    status: 'ready',
+    durationMs: phaseDurationMs(phase, config),
+    endsAt: null,
+    remainingMs: null,
+    sleptAt: null
+  }
+}
+
+function freshCycle(localDate: string, config: TimerConfig): Partial<TimerState> {
+  return { ...readyPhase('focus', config), completedInCycle: 0, cycleDate: localDate }
+}
+
+function applied(state: TimerState, changes: Partial<TimerState>): TransitionResult {
+  return {
+    state: { ...state, notice: null, ...changes, revision: state.revision + 1 },
+    effects: [],
+    outcome: { kind: 'applied' }
+  }
+}
+
+function ignored(state: TimerState, reason: 'staleRevision' | 'notAllowed'): TransitionResult {
+  return { state, effects: [], outcome: { kind: 'ignored', reason } }
+}
