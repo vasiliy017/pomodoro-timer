@@ -9,8 +9,8 @@ files_hint: ["src/renderer/src/hooks/useTimerState.ts", "src/renderer/src/hooks/
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "M"
-status: "todo"
-step: ""
+status: "done"
+step: "COMMIT"
 ---
 
 <!-- To the executing agent: work from what is inlined here. If a slice is insufficient, ambiguous,

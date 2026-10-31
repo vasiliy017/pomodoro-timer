@@ -235,7 +235,7 @@
         "src/renderer/src/hooks/useTimerState.test.tsx"
       ],
       "file": "docs/features/focus-timer-core/tasks/t12-use-timer-state-hook.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T13",
