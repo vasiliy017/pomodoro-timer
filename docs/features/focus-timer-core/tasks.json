@@ -262,7 +262,7 @@
         "e2e/boot.spec.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t13-timer-screen.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T14",

@@ -36,10 +36,14 @@
   --font-size-md: 15px;
   --font-size-lg: 20px;
   --font-size-xl: 32px;
+  /* the countdown: large, with figures that do not shift as they change */
+  --font-size-countdown: 64px;
+  --letter-spacing-countdown: -0.02em;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 600;
   --line-height: 1.45;
+  --line-height-tight: 1;
 
   /* motion — durations in ms for JS (Motion) and CSS alike */
   --motion-duration-fast: 160ms;

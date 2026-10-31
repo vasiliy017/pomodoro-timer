@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { _electron as electron, expect, test } from '@playwright/test'
 
-test('the app boots, opens its main window and reaches main over IPC', async () => {
+test('the app boots to focus session 1 of 4, ready at 25:00, through the IPC bridge', async () => {
   const userData = mkdtempSync(join(tmpdir(), 'pomodoro-e2e-'))
   // Hosts built on Electron (VS Code and its terminals) export ELECTRON_RUN_AS_NODE=1, which would
   // start the app as plain Node.
@@ -16,8 +16,10 @@ test('the app boots, opens its main window and reaches main over IPC', async () 
   try {
     const window = await app.firstWindow()
     await expect(window).toHaveTitle('Pomodoro Timer')
-    await expect(window.getByRole('heading', { name: 'Pomodoro Timer' })).toBeVisible()
-    await expect(window.getByTestId('bridge-status')).toHaveText('pong: renderer')
+    // The screen shows the snapshot main sent over the bridge (timerGetState / timer:state).
+    await expect(window.getByRole('heading', { name: 'Focus session 1 of 4' })).toBeVisible()
+    await expect(window.getByRole('timer')).toHaveText('25:00')
+    await expect(window.getByRole('button', { name: 'Start', exact: true })).toBeVisible()
 
     // The page sees only the bridge: no Node globals (nodeIntegration off, sandbox, isolation).
     const pageGlobals = await window.evaluate(() => ({

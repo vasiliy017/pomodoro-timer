@@ -4,16 +4,3 @@
   height: 100%;
   padding: var(--space-6);
 }
-
-.title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-}
-
-.status {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
