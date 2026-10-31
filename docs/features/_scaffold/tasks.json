@@ -1,0 +1,86 @@
+{
+  "slug": "_scaffold",
+  "tasks": [
+    {
+      "id": "S1",
+      "title": "Create the electron-vite project structure with main, preload, renderer and shared entry points",
+      "layer": "scaffold",
+      "deps": [],
+      "acs": [],
+      "dod": "npm run build succeeds; the app boots on macOS and shows an empty React window; renderer runs with contextIsolation, sandbox and no nodeIntegration; src/shared has no Electron or DOM imports",
+      "files_hint": ["package.json", "electron.vite.config.ts", "tsconfig*.json", "src/main/index.ts", "src/preload/index.ts", "src/renderer/index.html", "src/renderer/src/main.tsx", "src/shared/"]
+    },
+    {
+      "id": "S2",
+      "title": "Wire the test harness: Vitest (node + jsdom with Testing Library) and a Playwright Electron boot smoke test",
+      "layer": "scaffold",
+      "deps": ["S1"],
+      "acs": [],
+      "dod": "npm test runs green with one trivial shared-module test; npm run test:e2e launches the built app via Playwright _electron and asserts the main window opens",
+      "files_hint": ["vitest.config.ts", "playwright.config.ts", "e2e/boot.spec.ts", "src/shared/"]
+    },
+    {
+      "id": "S3",
+      "title": "Add the typed IPC contract and preload bridge (one ping channel end to end)",
+      "layer": "scaffold",
+      "deps": ["S1"],
+      "acs": [],
+      "dod": "src/shared/ipc.ts defines channel names and payload types; main registers handlers in src/main/ipc.ts; window.api.ping() round-trips in the running app; types flow to the renderer without any hand-written channel strings",
+      "files_hint": ["src/shared/ipc.ts", "src/main/ipc.ts", "src/preload/index.ts", "src/renderer/src/env.d.ts"]
+    },
+    {
+      "id": "S4",
+      "title": "Set up the versioned JSON store with atomic writes and a schemaVersion migration runner",
+      "layer": "scaffold",
+      "deps": ["S1", "S2"],
+      "acs": [],
+      "dod": "the store reads and writes settings.json in a configurable directory atomically (temp + rename); an initial v1 schema and an empty migration chain load and upgrade cleanly; unit tests cover a fresh file, an existing v1 file and a corrupt file",
+      "files_hint": ["src/main/store.ts", "src/main/store/migrations.ts", "src/main/store.test.ts"]
+    },
+    {
+      "id": "S5",
+      "title": "Add design tokens, the CSS Modules convention and Motion to the renderer",
+      "layer": "scaffold",
+      "deps": ["S1"],
+      "acs": [],
+      "dod": "tokens.css defines color (light and dark), spacing, radius, typography and motion custom properties; one placeholder component styled with a *.module.css file uses tokens and a Motion animation that honors prefers-reduced-motion; build stays green",
+      "files_hint": ["src/renderer/src/styles/tokens.css", "src/renderer/src/components/ui/", "src/renderer/src/App.tsx"]
+    },
+    {
+      "id": "S6",
+      "title": "Configure ESLint (flat, typescript-eslint), Prettier and the typecheck script",
+      "layer": "scaffold",
+      "deps": ["S1"],
+      "acs": [],
+      "dod": "npm run lint and npm run typecheck both pass on the skeleton",
+      "files_hint": ["eslint.config.js", ".prettierrc", "package.json"]
+    },
+    {
+      "id": "S7",
+      "title": "Configure electron-builder to produce an unsigned macOS .dmg",
+      "layer": "scaffold",
+      "deps": ["S1"],
+      "acs": [],
+      "dod": "npm run dist:mac produces a .dmg that installs and launches (via Open Anyway); signing and notarization are explicitly disabled in config",
+      "files_hint": ["electron-builder.yml", "package.json"]
+    },
+    {
+      "id": "S8",
+      "title": "Add the GitHub Actions CI workflow on macos-latest",
+      "layer": "scaffold",
+      "deps": ["S2", "S6"],
+      "acs": [],
+      "dod": "the workflow is valid and runs npm ci, typecheck, lint, test and build; its commands match package.json scripts",
+      "files_hint": [".github/workflows/ci.yml"]
+    },
+    {
+      "id": "S9",
+      "title": "Write CLAUDE.md from the foundation conventions",
+      "layer": "scaffold",
+      "deps": ["S1"],
+      "acs": [],
+      "dod": "CLAUDE.md states the commands, the process boundary, timer-truth in main, IPC contract, store and migration rules, and UI token and styling rules, consistent with docs/architecture-map.md",
+      "files_hint": ["CLAUDE.md"]
+    }
+  ]
+}
