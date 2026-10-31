@@ -17,7 +17,7 @@
 | T7 | Add the phase-end signals adapter and the single timer window | infra | Vasiliy | M | T1 | done | COMMIT |
 | T8 | Map powerMonitor and clock notifications to timer callbacks | infra | Vasiliy | S | — | done | COMMIT |
 | T9 | Add the quit guard | app | Vasiliy | S | T1 | done | COMMIT |
-| T10 | Build the timer service | app | Vasiliy | M | T4, T6 | todo | — |
+| T10 | Build the timer service | app | Vasiliy | M | T4, T6 | done | COMMIT |
 | T11 | Add the IPC timer contract across shared, main and preload | ports | Vasiliy | M | T6, T7, T10 | todo | — |
 | T12 | Add the useTimerState hook | ui | Vasiliy | S | T11 | todo | — |
 | T13 | Build the TimerScreen | ui | Vasiliy | M | T12 | todo | — |

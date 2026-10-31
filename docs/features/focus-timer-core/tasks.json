@@ -192,7 +192,7 @@
         "src/main/timer-service.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t10-timer-service.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T11",
