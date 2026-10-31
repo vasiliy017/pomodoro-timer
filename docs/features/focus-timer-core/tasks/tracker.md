@@ -13,7 +13,7 @@
 | T3 | Implement the deadline transition | domain | Vasiliy | M | T2 | done | COMMIT |
 | T4 | Implement sleep, wake, new-day and clock-change transitions | domain | Vasiliy | M | T3 | done | COMMIT |
 | T5 | Add the 10,000-sequence command-safety property test | tests | Vasiliy | S | T4 | done | COMMIT |
-| T6 | Add the main-process clock adapter | infra | Vasiliy | S | — | todo | — |
+| T6 | Add the main-process clock adapter | infra | Vasiliy | S | — | done | COMMIT |
 | T7 | Add the phase-end signals adapter and the single timer window | infra | Vasiliy | M | T1 | todo | — |
 | T8 | Map powerMonitor and clock notifications to timer callbacks | infra | Vasiliy | S | — | todo | — |
 | T9 | Add the quit guard | app | Vasiliy | S | T1 | todo | — |

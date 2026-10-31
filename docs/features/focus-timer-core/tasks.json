@@ -114,7 +114,7 @@
         "src/main/clock.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t06-clock-adapter.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T7",
