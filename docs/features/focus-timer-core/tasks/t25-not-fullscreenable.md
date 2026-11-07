@@ -9,8 +9,8 @@ files_hint: ["src/main/window.ts", "src/main/window.test.ts"]
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: "—"
+status: "done"
+step: "COMMIT"
 ---
 
 # T25 — Stop the timer window going full screen

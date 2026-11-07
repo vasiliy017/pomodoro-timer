@@ -52,6 +52,11 @@ describe('createTimerWindow', () => {
     expect(electron.created[0]?.loadFile).toHaveBeenCalledOnce()
   })
 
+  it('cannot go full screen, where hiding on close would leave an empty Space', () => {
+    createTimerWindow()
+    expect(electron.created[0]?.options).toMatchObject({ fullscreenable: false })
+  })
+
   it('hides instead of closing', () => {
     const timer = createTimerWindow()
     const prevented = electron.created[0]?.close()

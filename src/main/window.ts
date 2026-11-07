@@ -17,6 +17,7 @@ export function createTimerWindow(): TimerWindow {
   const window = new BrowserWindow({
     width: 420,
     height: 560,
+    fullscreenable: false,
     show: false,
     title: 'Pomodoro Timer',
     webPreferences: {

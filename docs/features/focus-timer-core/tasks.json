@@ -486,7 +486,7 @@
         "src/main/window.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t25-not-fullscreenable.md",
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "T26",
