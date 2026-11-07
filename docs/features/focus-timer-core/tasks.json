@@ -419,7 +419,7 @@
         "src/renderer/src/screens/TimerScreen.tsx"
       ],
       "file": "docs/features/focus-timer-core/tasks/t21-shared-loss-message.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T22",

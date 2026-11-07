@@ -4,12 +4,14 @@ import {
   createInitialState,
   DEFAULT_TIMER_CONFIG,
   isTimerCommand,
+  lossMessage,
   restartLoss,
   toSnapshot,
   transition,
   type Controls,
   type PhaseKind,
   type PhaseStatus,
+  type RestartLoss,
   type TimerCommand,
   type TimerInput,
   type TimerState
@@ -176,6 +178,33 @@ describe('toSnapshot', () => {
     const snap = toSnapshot(s, T0 + 3 * 60 * MIN, DEFAULT_TIMER_CONFIG)
     expect(snap.remainingMs).toBe(12 * MIN + 34_000)
     expect(snap.endsAt).toBeNull()
+  })
+})
+
+describe('lossMessage', () => {
+  it.each<[RestartLoss, string]>([
+    [
+      { completedInCycle: 3, phaseInProgress: 'focus' },
+      '3 completed focus sessions will no longer count toward the long break, and the focus session in progress will end uncounted.'
+    ],
+    [
+      { completedInCycle: 1, phaseInProgress: null },
+      '1 completed focus session will no longer count toward the long break.'
+    ],
+    [
+      { completedInCycle: 0, phaseInProgress: 'shortBreak' },
+      'The short break in progress will end.'
+    ],
+    [
+      { completedInCycle: 0, phaseInProgress: 'focus' },
+      'The focus session in progress will end uncounted.'
+    ],
+    [
+      { completedInCycle: 4, phaseInProgress: 'longBreak' },
+      '4 completed focus sessions will no longer count toward the long break, and the long break in progress will end.'
+    ]
+  ])('%j', (value, message) => {
+    expect(lossMessage(value)).toBe(message)
   })
 })
 

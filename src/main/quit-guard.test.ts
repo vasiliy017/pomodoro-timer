@@ -1,11 +1,11 @@
 import { EventEmitter } from 'node:events'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { RestartLoss } from '@shared/timer'
+import { lossMessage, type RestartLoss } from '@shared/timer'
 
 const electron = vi.hoisted(() => ({ dialog: { showMessageBox: vi.fn() } }))
 vi.mock('electron', () => ({ dialog: electron.dialog }))
 
-const { installQuitGuard, lossMessage, showQuitConfirmation } = await import('./quit-guard')
+const { installQuitGuard, showQuitConfirmation } = await import('./quit-guard')
 
 class FakeApp extends EventEmitter {
   quit = vi.fn(() => {
@@ -86,33 +86,6 @@ describe('installQuitGuard', () => {
     showConfirm.mockResolvedValue(false)
     app.requestQuit()
     expect(showConfirm).toHaveBeenCalledTimes(2)
-  })
-})
-
-describe('lossMessage', () => {
-  it.each<[RestartLoss, string]>([
-    [
-      { completedInCycle: 3, phaseInProgress: 'focus' },
-      '3 completed focus sessions will no longer count toward the long break, and the focus session in progress will end uncounted.'
-    ],
-    [
-      { completedInCycle: 1, phaseInProgress: null },
-      '1 completed focus session will no longer count toward the long break.'
-    ],
-    [
-      { completedInCycle: 0, phaseInProgress: 'shortBreak' },
-      'The short break in progress will end.'
-    ],
-    [
-      { completedInCycle: 0, phaseInProgress: 'focus' },
-      'The focus session in progress will end uncounted.'
-    ],
-    [
-      { completedInCycle: 4, phaseInProgress: 'longBreak' },
-      '4 completed focus sessions will no longer count toward the long break, and the long break in progress will end.'
-    ]
-  ])('%j', (value, message) => {
-    expect(lossMessage(value)).toBe(message)
   })
 })
 

@@ -9,8 +9,8 @@ files_hint: ["src/shared/timer.ts", "src/shared/timer.test.ts", "src/main/quit-g
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: "—"
+status: "done"
+step: "COMMIT"
 ---
 
 # T21 — Share one loss sentence between the quit dialog and Restart cycle

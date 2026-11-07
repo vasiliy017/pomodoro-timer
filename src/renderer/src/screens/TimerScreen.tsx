@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import type {
-  Controls,
-  Notice,
-  PhaseKind,
-  PhaseStatus,
-  RestartLoss,
-  TimerSnapshot
+import {
+  lossMessage,
+  type Controls,
+  type Notice,
+  type PhaseKind,
+  type PhaseStatus,
+  type RestartLoss,
+  type TimerSnapshot
 } from '@shared/timer'
 import { Button } from '../components/ui/Button'
 import { Dialog } from '../components/ui/Dialog'
@@ -47,23 +48,6 @@ function noticeText(notice: Notice): string {
       : 'Break ended while the Mac was asleep'
   }
   return focus ? 'Focus session complete' : 'Break over'
-}
-
-/** What a Restart cycle would throw away (AC-12); the same sentence as main's quit dialog. */
-function lossText({ completedInCycle, phaseInProgress }: RestartLoss): string {
-  const parts: string[] = []
-  if (completedInCycle > 0) {
-    const sessions = completedInCycle === 1 ? 'focus session' : 'focus sessions'
-    parts.push(
-      `${completedInCycle} completed ${sessions} will no longer count toward the long break`
-    )
-  }
-  if (phaseInProgress !== null) {
-    const uncounted = phaseInProgress === 'focus' ? ' uncounted' : ''
-    parts.push(`the ${PHASE_NAMES[phaseInProgress].toLowerCase()} in progress will end${uncounted}`)
-  }
-  const sentence = parts.join(', and ')
-  return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`
 }
 
 type ControlName = Exclude<keyof Controls, 'restartCycle'>
@@ -152,7 +136,7 @@ export function TimerScreen() {
         onConfirm={confirmRestart}
         onCancel={() => setPendingRestart(null)}
       >
-        {pendingRestart && lossText(pendingRestart.loss)}
+        {pendingRestart && lossMessage(pendingRestart.loss)}
       </Dialog>
     </div>
   )

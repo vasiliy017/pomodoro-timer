@@ -156,6 +156,29 @@ export function isRestartLossEmpty(loss: RestartLoss): boolean {
   return loss.completedInCycle === 0 && loss.phaseInProgress === null
 }
 
+const LOSS_PHASE_NAMES: Record<PhaseKind, string> = {
+  focus: 'focus session',
+  shortBreak: 'short break',
+  longBreak: 'long break'
+}
+
+/** Names exactly what a Restart cycle or a quit would lose (AC-12, AC-13). */
+export function lossMessage({ completedInCycle, phaseInProgress }: RestartLoss): string {
+  const parts: string[] = []
+  if (completedInCycle > 0) {
+    const sessions = completedInCycle === 1 ? 'focus session' : 'focus sessions'
+    parts.push(
+      `${completedInCycle} completed ${sessions} will no longer count toward the long break`
+    )
+  }
+  if (phaseInProgress !== null) {
+    const uncounted = phaseInProgress === 'focus' ? ' uncounted' : ''
+    parts.push(`the ${LOSS_PHASE_NAMES[phaseInProgress]} in progress will end${uncounted}`)
+  }
+  const sentence = parts.join(', and ')
+  return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }

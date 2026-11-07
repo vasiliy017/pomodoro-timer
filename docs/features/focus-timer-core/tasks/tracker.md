@@ -28,7 +28,7 @@
 | T18 | Settle a phase that is already due before judging a command | domain | Vasiliy | S | — | done | COMMIT |
 | T19 | Keep a waiting phase-end notice through the new-day reset | domain | Vasiliy | S | T18 | done | COMMIT |
 | T20 | Refuse timer commands that carry extra fields | domain | Vasiliy | S | T19 | done | COMMIT |
-| T21 | Share one loss sentence between the quit dialog and Restart cycle | domain | Vasiliy | S | T20 | todo | — |
+| T21 | Share one loss sentence between the quit dialog and Restart cycle | domain | Vasiliy | S | T20 | done | COMMIT |
 | T22 | Ignore repeat clicks on the controls and keep focus on the primary button | ui | Vasiliy | S | T21 | todo | — |
 | T23 | Link the Restart-cycle loss text to the dialog | ui | Vasiliy | S | — | todo | — |
 | T24 | Expire the OS-initiated-quit flag after a cancelled logout | app | Vasiliy | S | — | todo | — |

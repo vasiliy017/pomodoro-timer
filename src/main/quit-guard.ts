@@ -1,5 +1,5 @@
 import { dialog } from 'electron'
-import { isRestartLossEmpty, type PhaseKind, type RestartLoss } from '@shared/timer'
+import { isRestartLossEmpty, lossMessage, type RestartLoss } from '@shared/timer'
 
 export interface QuitGuardOptions {
   app: Pick<NodeJS.EventEmitter, 'on'> & { quit(): void }
@@ -42,29 +42,6 @@ export function installQuitGuard(options: QuitGuardOptions): { markOsInitiatedQu
       osInitiated = true
     }
   }
-}
-
-const PHASE_NAMES: Record<PhaseKind, string> = {
-  focus: 'focus session',
-  shortBreak: 'short break',
-  longBreak: 'long break'
-}
-
-/** Names exactly what a quit or a Restart cycle would lose (AC-12, AC-13). */
-export function lossMessage({ completedInCycle, phaseInProgress }: RestartLoss): string {
-  const parts: string[] = []
-  if (completedInCycle > 0) {
-    const sessions = completedInCycle === 1 ? 'focus session' : 'focus sessions'
-    parts.push(
-      `${completedInCycle} completed ${sessions} will no longer count toward the long break`
-    )
-  }
-  if (phaseInProgress !== null) {
-    const uncounted = phaseInProgress === 'focus' ? ' uncounted' : ''
-    parts.push(`the ${PHASE_NAMES[phaseInProgress]} in progress will end${uncounted}`)
-  }
-  const sentence = parts.join(', and ')
-  return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`
 }
 
 /** The native confirmation: main shows it because the timer window may be closed. */
