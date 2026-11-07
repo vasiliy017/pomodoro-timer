@@ -1,4 +1,11 @@
-import { useState, type MouseEvent } from 'react'
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+  type KeyboardEvent,
+  type MouseEvent
+} from 'react'
 import {
   lossMessage,
   type Controls,
@@ -60,6 +67,14 @@ function onSingleClick(action: () => void) {
   }
 }
 
+/**
+ * A held Enter auto-repeats keydown, and each repeat clicks the focused button again at the new
+ * revision (AC-02). Only the first press counts; Space is covered too for the same reason.
+ */
+function dropHeldKeys(event: KeyboardEvent) {
+  if (event.repeat && (event.key === 'Enter' || event.key === ' ')) event.preventDefault()
+}
+
 type ControlName = Exclude<keyof Controls, 'restartCycle'>
 
 /** A Restart cycle waiting for the User: the loss and the revision it was judged at. */
@@ -71,6 +86,17 @@ interface PendingRestart {
 export function TimerScreen() {
   const { snapshot, remainingMs, send } = useTimerState()
   const [pendingRestart, setPendingRestart] = useState<PendingRestart | null>(null)
+  const primaryRef = useRef<HTMLButtonElement>(null)
+  const lastFocusedControl = useRef<HTMLElement | null>(null)
+
+  // Reset and Skip can remove themselves (AC-02b). Focus would fall to <body>, so the next Tab
+  // starts from the top; move it to the primary button, which is always there.
+  useLayoutEffect(() => {
+    const last = lastFocusedControl.current
+    if (last && !last.isConnected && document.activeElement === document.body) {
+      primaryRef.current?.focus()
+    }
+  })
 
   async function restartCycle() {
     const outcome = await send('restartCycle', { confirmed: false })
@@ -122,21 +148,30 @@ export function TimerScreen() {
         </p>
       )}
 
-      <div className={styles.controls}>
+      <div
+        className={styles.controls}
+        onFocus={(event: FocusEvent<HTMLDivElement>) => {
+          lastFocusedControl.current = event.target
+        }}
+      >
         {commands
           .filter(({ name }) => controls[name])
           .map(({ name, label, primary }) => (
             <Button
               // One key for the primary slot: the same button stays, so it keeps keyboard focus.
               key={primary ? 'primary' : name}
+              ref={primary ? primaryRef : undefined}
               variant={primary ? 'primary' : 'secondary'}
               onClick={onSingleClick(() => void send(name))}
+              onKeyDown={dropHeldKeys}
             >
               {label}
             </Button>
           ))}
         {controls.restartCycle && (
-          <Button onClick={onSingleClick(() => void restartCycle())}>Restart cycle</Button>
+          <Button onClick={onSingleClick(() => void restartCycle())} onKeyDown={dropHeldKeys}>
+            Restart cycle
+          </Button>
         )}
       </div>
 

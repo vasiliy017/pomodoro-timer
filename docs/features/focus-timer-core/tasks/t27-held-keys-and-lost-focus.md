@@ -9,8 +9,8 @@ files_hint: ["src/renderer/src/screens/TimerScreen.tsx", "src/renderer/src/scree
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: ""
+status: "done"
+step: "COMMIT"
 ---
 
 # T27 — Ignore held-key repeats on the controls and keep focus when a control removes itself
@@ -19,7 +19,7 @@ Follow-up from the review: finding(s) N1, N5 (and the component part of N2) in [
 
 ## Definition of Done
 
-- [ ] holding Enter or Space on a focused control sends one command, not one per auto-repeat (AC-02)
-- [ ] when Reset or Skip removes itself, keyboard focus moves to the primary button instead of `<body>`
-- [ ] the component double-click test covers Start, Pause, Resume, Reset and Skip
-- [ ] Unit tests, lint and typecheck are clean
+- [x] holding Enter or Space on a focused control sends one command, not one per auto-repeat (AC-02)
+- [x] when Reset or Skip removes itself, keyboard focus moves to the primary button instead of `<body>`
+- [x] the component double-click test covers Start, Pause, Resume, Reset and Skip
+- [x] Unit tests, lint and typecheck are clean

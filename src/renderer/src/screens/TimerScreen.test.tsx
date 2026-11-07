@@ -53,20 +53,62 @@ beforeEach(() => {
 
 describe('TimerScreen', () => {
   describe('AC-02 repeat clicks', () => {
-    it.each(['Start', 'Restart cycle'])(
-      'ignores the second click of a double-click on %s',
-      (name) => {
-        show(snap('focus', 'ready'))
-        fireEvent.click(screen.getByRole('button', { name }), { detail: 2 })
-        expect(send).not.toHaveBeenCalled()
-      }
-    )
+    it.each<[string, PhaseStatus]>([
+      ['Start', 'ready'],
+      ['Pause', 'running'],
+      ['Resume', 'paused'],
+      ['Reset', 'running'],
+      ['Skip', 'running'],
+      ['Restart cycle', 'ready']
+    ])('ignores the second click of a double-click on %s', (name, status) => {
+      show(snap('focus', status))
+      fireEvent.click(screen.getByRole('button', { name }), { detail: 2 })
+      expect(send).not.toHaveBeenCalled()
+    })
 
     it('a single click and a keyboard press (detail 0) both send', () => {
       show(snap('focus', 'ready'))
       fireEvent.click(screen.getByRole('button', { name: 'Start' }), { detail: 1 })
       fireEvent.click(screen.getByRole('button', { name: 'Start' }), { detail: 0 })
       expect(send).toHaveBeenCalledTimes(2)
+    })
+
+    // A held key auto-repeats keydown; each repeat would click the same focused button again.
+    it.each(['Enter', ' '])('drops auto-repeated %j keydowns on a control', (key) => {
+      show(snap('focus', 'running'))
+      for (const name of ['Pause', 'Reset', 'Skip', 'Restart cycle']) {
+        const button = screen.getByRole('button', { name })
+        // fireEvent returns false when the handler called preventDefault.
+        expect(fireEvent.keyDown(button, { key, repeat: true }), name).toBe(false)
+        expect(fireEvent.keyDown(button, { key, repeat: false }), name).toBe(true)
+      }
+    })
+  })
+
+  describe('keyboard focus when a control removes itself', () => {
+    it.each<[string, TimerSnapshot, TimerSnapshot]>([
+      ['Reset', snap('focus', 'running'), snap('focus', 'ready', { revision: 2 })],
+      [
+        'Skip',
+        snap('shortBreak', 'ready', { completedInCycle: 1 }),
+        snap('focus', 'ready', { revision: 2, completedInCycle: 1 })
+      ]
+    ])('moves focus to the primary button after %s', (name, before, after) => {
+      const { rerender } = show(before)
+      screen.getByRole('button', { name }).focus()
+      hook.mockReturnValue({ snapshot: after, remainingMs: after.remainingMs, send })
+      rerender(<TimerScreen />)
+      expect(screen.queryByRole('button', { name })).toBeNull()
+      expect(screen.getByRole('button', { name: 'Start' })).toHaveFocus()
+    })
+
+    it('leaves focus alone when it was not on a control', () => {
+      const { rerender } = show(snap('focus', 'running'))
+      expect(document.body).toHaveFocus()
+      const after = snap('focus', 'ready', { revision: 2 })
+      hook.mockReturnValue({ snapshot: after, remainingMs: after.remainingMs, send })
+      rerender(<TimerScreen />)
+      expect(document.body).toHaveFocus()
     })
   })
 

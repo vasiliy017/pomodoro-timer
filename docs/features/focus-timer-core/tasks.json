@@ -526,7 +526,7 @@
         "src/renderer/src/screens/TimerScreen.test.tsx"
       ],
       "file": "docs/features/focus-timer-core/tasks/t27-held-keys-and-lost-focus.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T28",
