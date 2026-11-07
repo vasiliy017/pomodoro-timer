@@ -37,6 +37,6 @@
 | T27 | Ignore held-key repeats on the controls and keep focus when a control removes itself | ui | Vasiliy | S | — | done | COMMIT |
 | T28 | Document that an ignored command can first settle a phase that is already due | docs | Vasiliy | S | — | done | COMMIT |
 | T29 | Make the double-click, held-key, second-launch and relaunch e2e tests able to fail | tests | Vasiliy | S | T27 | done | COMMIT |
-| T30 | Measure launch time inside the app | tests | Vasiliy | S | T29 | todo |  |
+| T30 | Measure launch time inside the app | tests | Vasiliy | S | T29 | done | COMMIT |
 
 **Total:** 30 tasks (T18–T30 are review follow-ups), ~20.5 person-days (S ≈ ½ day, M ≈ 1 day).

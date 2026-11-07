@@ -579,7 +579,7 @@
         "src/renderer/src/screens/TimerScreen.tsx"
       ],
       "file": "docs/features/focus-timer-core/tasks/t30-in-app-launch-timing.md",
-      "status": "todo"
+      "status": "done"
     }
   ]
 }

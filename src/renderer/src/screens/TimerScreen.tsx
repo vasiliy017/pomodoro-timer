@@ -127,7 +127,11 @@ export function TimerScreen() {
   return (
     <div className={styles.screen}>
       <header className={styles.header}>
-        <h1 className={styles.title}>{phaseTitle(snapshot)}</h1>
+        {/* Element Timing marks the first paint of the ready screen: the e2e launch-time check
+            (spec §6) reads it, so it measures the app, not the test harness. */}
+        <h1 className={styles.title} elementtiming="phase-title">
+          {phaseTitle(snapshot)}
+        </h1>
         {snapshot.phase !== 'focus' && (
           <p className={styles.cycle}>
             {snapshot.completedInCycle} of {snapshot.focusSessionsPerCycle} completed
