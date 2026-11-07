@@ -34,5 +34,9 @@
 | T24 | Expire the OS-initiated-quit flag after a cancelled logout | app | Vasiliy | S | — | done | COMMIT |
 | T25 | Stop the timer window going full screen | infra | Vasiliy | S | — | done | COMMIT |
 | T26 | Fill in the missing end-to-end rows of the test plan | tests | Vasiliy | M | T22, T23, T24, T25 | done | COMMIT |
+| T27 | Ignore held-key repeats on the controls and keep focus when a control removes itself | ui | Vasiliy | S | — | todo |  |
+| T28 | Document that an ignored command can first settle a phase that is already due | docs | Vasiliy | S | — | todo |  |
+| T29 | Make the double-click, held-key, second-launch and relaunch e2e tests able to fail | tests | Vasiliy | S | T27 | todo |  |
+| T30 | Measure launch time inside the app | tests | Vasiliy | S | T29 | todo |  |
 
-**Total:** 26 tasks (T18–T26 are review follow-ups), ~18.5 person-days (S ≈ ½ day, M ≈ 1 day).
+**Total:** 30 tasks (T18–T30 are review follow-ups), ~20.5 person-days (S ≈ ½ day, M ≈ 1 day).

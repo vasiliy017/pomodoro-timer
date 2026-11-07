@@ -511,6 +511,75 @@
       ],
       "file": "docs/features/focus-timer-core/tasks/t26-e2e-test-plan-rows.md",
       "status": "done"
+    },
+    {
+      "id": "T27",
+      "title": "Ignore held-key repeats on the controls and keep focus when a control removes itself",
+      "layer": "ui",
+      "deps": [],
+      "acs": [
+        "AC-02"
+      ],
+      "dod": "holding Enter or Space on a control sends one command; when Reset or Skip removes itself, focus moves to the primary button; the component double-click test covers all five controls",
+      "files_hint": [
+        "src/renderer/src/screens/TimerScreen.tsx",
+        "src/renderer/src/screens/TimerScreen.test.tsx"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t27-held-keys-and-lost-focus.md",
+      "status": "todo"
+    },
+    {
+      "id": "T28",
+      "title": "Document that an ignored command can first settle a phase that is already due",
+      "layer": "docs",
+      "deps": [],
+      "acs": [
+        "AC-02",
+        "AC-05",
+        "AC-07"
+      ],
+      "dod": "public-api.md §1 and §2, sad.md Flow 4 and Flow 6, and the effects comment in timer.ts all describe a command that settles an overdue phase or starts the new day before it is judged stale",
+      "files_hint": [
+        "docs/features/focus-timer-core/contracts/public-api.md",
+        "docs/features/focus-timer-core/sad.md",
+        "src/shared/timer.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t28-ignored-command-docs.md",
+      "status": "todo"
+    },
+    {
+      "id": "T29",
+      "title": "Make the double-click, held-key, second-launch and relaunch e2e tests able to fail",
+      "layer": "tests",
+      "deps": [
+        "T27"
+      ],
+      "acs": [
+        "AC-02",
+        "AC-13"
+      ],
+      "dod": "every double-click step proves its second press hits a control, including a Skip that lands on its replacement; a held-Enter test asserts one revision step; the second-launch helper times out and kills the child; the relaunch test always closes the first app and asserts a fresh state through timerGetState",
+      "files_hint": [
+        "e2e/timer.spec.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t29-e2e-tests-that-can-fail.md",
+      "status": "todo"
+    },
+    {
+      "id": "T30",
+      "title": "Measure launch time inside the app",
+      "layer": "tests",
+      "deps": [
+        "T29"
+      ],
+      "acs": [],
+      "dod": "the cold-launch test measures from main process start to the first render of the ready heading, without Playwright attach time, and keeps the 2 s budget",
+      "files_hint": [
+        "e2e/boot.spec.ts",
+        "src/renderer/src/screens/TimerScreen.tsx"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t30-in-app-launch-timing.md",
+      "status": "todo"
     }
   ]
 }
