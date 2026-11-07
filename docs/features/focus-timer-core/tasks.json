@@ -510,7 +510,7 @@
         "e2e/boot.spec.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t26-e2e-test-plan-rows.md",
-      "status": "in_progress"
+      "status": "done"
     }
   ]
 }

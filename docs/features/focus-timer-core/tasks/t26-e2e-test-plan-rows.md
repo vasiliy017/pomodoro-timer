@@ -9,8 +9,8 @@ files_hint: ["e2e/timer.spec.ts", "e2e/boot.spec.ts"]
 owner: "Vasiliy"
 estimate: "M"
 context_budget: "M"
-status: "todo"
-step: "—"
+status: "done"
+step: "COMMIT"
 ---
 
 # T26 — Fill in the missing end-to-end rows of the test plan

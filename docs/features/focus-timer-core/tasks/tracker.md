@@ -33,6 +33,6 @@
 | T23 | Link the Restart-cycle loss text to the dialog | ui | Vasiliy | S | — | done | COMMIT |
 | T24 | Expire the OS-initiated-quit flag after a cancelled logout | app | Vasiliy | S | — | done | COMMIT |
 | T25 | Stop the timer window going full screen | infra | Vasiliy | S | — | done | COMMIT |
-| T26 | Fill in the missing end-to-end rows of the test plan | tests | Vasiliy | M | T22, T23, T24, T25 | in_progress | RED |
+| T26 | Fill in the missing end-to-end rows of the test plan | tests | Vasiliy | M | T22, T23, T24, T25 | done | COMMIT |
 
 **Total:** 26 tasks (T18–T26 are review follow-ups), ~18.5 person-days (S ≈ ½ day, M ≈ 1 day).
