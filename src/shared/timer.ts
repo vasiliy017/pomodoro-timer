@@ -274,9 +274,7 @@ export function transition(
   const settled = applySystemInput(state, input, now, localDate, config)
   // Only a phase end bumps the revision here; sleep and wake-while-running change nothing visible.
   const endedNotice = settled.revision !== state.revision ? settled.notice : null
-  let next = startNewDay(settled, localDate, config)
-  // A phase that ended in this transition keeps its notice through a new-day reset.
-  if (endedNotice && next !== settled) next = { ...next, notice: endedNotice }
+  const next = startNewDay(settled, localDate, config)
   if (next === state) return ignored(state, 'notAllowed')
 
   const effects: TimerEffect[] = []
@@ -343,10 +341,11 @@ function endPhase(
 /**
  * The new-day rule (AC-15): a cycle belongs to the local date it began on. A phase that is not
  * running on a later date gives way to a fresh cycle; a running phase is left alone until it ends.
+ * A waiting phase-end notice stays: only the next command or phase end clears it (AC-06).
  */
 function startNewDay(state: TimerState, localDate: string, config: TimerConfig): TimerState {
   if (state.status === 'running' || localDate <= state.cycleDate) return state
-  return applied(state, freshCycle(localDate, config)).state
+  return applied(state, { ...freshCycle(localDate, config), notice: state.notice }).state
 }
 
 function applyCommand(

@@ -937,15 +937,27 @@ describe('transition — new day (AC-15)', () => {
   })
 
   it('the midnight deadline replaces a ready break with a fresh cycle, never starts it', () => {
-    const s = state({
-      phase: 'shortBreak',
-      durationMs: 5 * MIN,
-      completedInCycle: 2,
-      notice: { kind: 'phaseEnded', endedPhase: 'focus', counted: true }
-    })
+    const s = state({ phase: 'shortBreak', durationMs: 5 * MIN, completedInCycle: 2 })
     const r = send(s, { kind: 'deadline' }, T0, TOMORROW)
     expect(r.state).toMatchObject({ phase: 'focus', status: 'ready', completedInCycle: 0 })
-    expect(r.state.notice).toBeNull()
+  })
+
+  it('a waiting phase-end notice stays through the new-day reset, with no new signal (AC-06)', () => {
+    const notice = { kind: 'phaseEnded', endedPhase: 'focus', counted: true } as const
+    const s = state({ phase: 'shortBreak', durationMs: 5 * MIN, completedInCycle: 2, notice })
+    const r = send(s, { kind: 'deadline' }, T0, TOMORROW)
+    expect(r.state).toMatchObject({ phase: 'focus', completedInCycle: 0, notice })
+    expect(r.effects).toEqual([])
+  })
+
+  it('a stale command that triggers the reset leaves the notice; the next command clears it', () => {
+    const notice = { kind: 'endedWhileAsleep', endedPhase: 'focus', counted: false } as const
+    const s = state({ phase: 'shortBreak', durationMs: 5 * MIN, revision: 4, notice })
+    const r = command(s, { type: 'start', revision: 4 }, T0, TOMORROW)
+    expect(r.outcome).toEqual({ kind: 'ignored', reason: 'staleRevision' })
+    expect(r.state.notice).toEqual(notice)
+    const next = command(r.state, { type: 'start', revision: r.state.revision }, T0, TOMORROW)
+    expect(next.state.notice).toBeNull()
   })
 
   it("a Start at 00:02 carrying yesterday's revision never starts yesterday's ready break", () => {

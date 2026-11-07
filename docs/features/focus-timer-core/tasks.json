@@ -379,7 +379,7 @@
         "src/shared/timer.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t19-notice-through-new-day.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T20",

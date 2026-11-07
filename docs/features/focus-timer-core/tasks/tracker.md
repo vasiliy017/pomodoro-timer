@@ -26,7 +26,7 @@
 | T16 | Add end-to-end timing tests | tests | Vasiliy | M | T14, T15 | done | COMMIT |
 | T17 | Mark repo ADR-0002 partially superseded; write the device checklist | docs | Vasiliy | S | — | done | COMMIT |
 | T18 | Settle a phase that is already due before judging a command | domain | Vasiliy | S | — | done | COMMIT |
-| T19 | Keep a waiting phase-end notice through the new-day reset | domain | Vasiliy | S | T18 | todo | — |
+| T19 | Keep a waiting phase-end notice through the new-day reset | domain | Vasiliy | S | T18 | done | COMMIT |
 | T20 | Refuse timer commands that carry extra fields | domain | Vasiliy | S | T19 | todo | — |
 | T21 | Share one loss sentence between the quit dialog and Restart cycle | domain | Vasiliy | S | T20 | todo | — |
 | T22 | Ignore repeat clicks on the controls and keep focus on the primary button | ui | Vasiliy | S | T21 | todo | — |
