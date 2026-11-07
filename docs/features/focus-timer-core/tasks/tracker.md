@@ -30,9 +30,9 @@
 | T20 | Refuse timer commands that carry extra fields | domain | Vasiliy | S | T19 | done | COMMIT |
 | T21 | Share one loss sentence between the quit dialog and Restart cycle | domain | Vasiliy | S | T20 | done | COMMIT |
 | T22 | Ignore repeat clicks on the controls and keep focus on the primary button | ui | Vasiliy | S | T21 | done | COMMIT |
-| T23 | Link the Restart-cycle loss text to the dialog | ui | Vasiliy | S | — | todo | — |
-| T24 | Expire the OS-initiated-quit flag after a cancelled logout | app | Vasiliy | S | — | todo | — |
-| T25 | Stop the timer window going full screen | infra | Vasiliy | S | — | todo | — |
-| T26 | Fill in the missing end-to-end rows of the test plan | tests | Vasiliy | M | T22, T23, T24, T25 | todo | — |
+| T23 | Link the Restart-cycle loss text to the dialog | ui | Vasiliy | S | — | done | COMMIT |
+| T24 | Expire the OS-initiated-quit flag after a cancelled logout | app | Vasiliy | S | — | in_progress | GATE |
+| T25 | Stop the timer window going full screen | infra | Vasiliy | S | — | in_progress | GATE |
+| T26 | Fill in the missing end-to-end rows of the test plan | tests | Vasiliy | M | T22, T23, T24, T25 | in_progress | RED |
 
 **Total:** 26 tasks (T18–T26 are review follow-ups), ~18.5 person-days (S ≈ ½ day, M ≈ 1 day).

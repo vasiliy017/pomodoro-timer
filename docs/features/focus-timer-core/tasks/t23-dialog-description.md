@@ -9,8 +9,8 @@ files_hint: ["src/renderer/src/components/ui/Dialog.tsx", "src/renderer/src/comp
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: "—"
+status: "done"
+step: "COMMIT"
 ---
 
 # T23 — Link the Restart-cycle loss text to the dialog

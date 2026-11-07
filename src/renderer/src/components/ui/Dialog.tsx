@@ -30,6 +30,7 @@ export function Dialog({
   const ref = useRef<HTMLDialogElement>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
   const titleId = useId()
+  const bodyId = useId()
   const reduceMotion = useReducedMotion()
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export function Dialog({
       ref={ref}
       className={styles.dialog}
       aria-labelledby={titleId}
+      aria-describedby={bodyId}
       onCancel={(event) => {
         // React owns `open`: Esc asks the parent to close instead of closing behind its back.
         event.preventDefault()
@@ -64,7 +66,9 @@ export function Dialog({
           <h2 id={titleId} className={styles.title}>
             {title}
           </h2>
-          <div className={styles.body}>{children}</div>
+          <div id={bodyId} className={styles.body}>
+            {children}
+          </div>
           <div className={styles.actions}>
             <Button ref={cancelRef} onClick={onCancel}>
               {cancelLabel}

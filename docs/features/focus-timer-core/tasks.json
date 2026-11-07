@@ -454,7 +454,7 @@
         "src/renderer/src/components/ui/Dialog.test.tsx"
       ],
       "file": "docs/features/focus-timer-core/tasks/t23-dialog-description.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T24",
@@ -470,7 +470,7 @@
         "src/main/quit-guard.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t24-os-quit-flag-expiry.md",
-      "status": "todo"
+      "status": "in_progress"
     },
     {
       "id": "T25",
@@ -486,7 +486,7 @@
         "src/main/window.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t25-not-fullscreenable.md",
-      "status": "todo"
+      "status": "in_progress"
     },
     {
       "id": "T26",
@@ -510,7 +510,7 @@
         "e2e/boot.spec.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t26-e2e-test-plan-rows.md",
-      "status": "todo"
+      "status": "in_progress"
     }
   ]
 }

@@ -27,6 +27,11 @@ describe('Dialog', () => {
     expect(dialog).toHaveTextContent('Something will be lost.')
   })
 
+  it('is described by its body, so a screen reader announces the sentence with the title', () => {
+    renderDialog()
+    expect(screen.getByRole('dialog')).toHaveAccessibleDescription('Something will be lost.')
+  })
+
   it('renders nothing visible while closed', () => {
     renderDialog(false)
     expect(screen.queryByRole('dialog')).toBeNull()
