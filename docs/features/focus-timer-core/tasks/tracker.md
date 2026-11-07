@@ -25,5 +25,14 @@
 | T15 | Wire main and opt out of App Nap | wiring | Vasiliy | M | T7, T8, T9, T10, T11 | done | COMMIT |
 | T16 | Add end-to-end timing tests | tests | Vasiliy | M | T14, T15 | done | COMMIT |
 | T17 | Mark repo ADR-0002 partially superseded; write the device checklist | docs | Vasiliy | S | — | done | COMMIT |
+| T18 | Settle a phase that is already due before judging a command | domain | Vasiliy | S | — | todo | — |
+| T19 | Keep a waiting phase-end notice through the new-day reset | domain | Vasiliy | S | T18 | todo | — |
+| T20 | Refuse timer commands that carry extra fields | domain | Vasiliy | S | T19 | todo | — |
+| T21 | Share one loss sentence between the quit dialog and Restart cycle | domain | Vasiliy | S | T20 | todo | — |
+| T22 | Ignore repeat clicks on the controls and keep focus on the primary button | ui | Vasiliy | S | T21 | todo | — |
+| T23 | Link the Restart-cycle loss text to the dialog | ui | Vasiliy | S | — | todo | — |
+| T24 | Expire the OS-initiated-quit flag after a cancelled logout | app | Vasiliy | S | — | todo | — |
+| T25 | Stop the timer window going full screen | infra | Vasiliy | S | — | todo | — |
+| T26 | Fill in the missing end-to-end rows of the test plan | tests | Vasiliy | M | T22, T23, T24, T25 | todo | — |
 
-**Total:** 17 tasks, ~13.5 person-days (S ≈ ½ day, M ≈ 1 day).
+**Total:** 26 tasks (T18–T26 are review follow-ups), ~18.5 person-days (S ≈ ½ day, M ≈ 1 day).

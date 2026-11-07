@@ -342,6 +342,175 @@
       ],
       "file": "docs/features/focus-timer-core/tasks/t17-docs-adr-note-and-device-checklist.md",
       "status": "done"
+    },
+    {
+      "id": "T18",
+      "title": "Settle a phase that is already due before judging a command",
+      "layer": "domain",
+      "deps": [],
+      "acs": [
+        "AC-05",
+        "AC-07",
+        "AC-14"
+      ],
+      "dod": "a command on an overdue running phase settles the phase first (notice, notification, Dock bounce) and is then ignored as stale; the property test tracks a session that ended asleep across steps",
+      "files_hint": [
+        "src/shared/timer.ts",
+        "src/shared/timer.test.ts",
+        "src/shared/timer.property.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t18-settle-overdue-phase.md",
+      "status": "todo"
+    },
+    {
+      "id": "T19",
+      "title": "Keep a waiting phase-end notice through the new-day reset",
+      "layer": "domain",
+      "deps": [
+        "T18"
+      ],
+      "acs": [
+        "AC-06",
+        "AC-15"
+      ],
+      "dod": "a new-day reset leaves a waiting notice in place; only the next command or phase end clears it",
+      "files_hint": [
+        "src/shared/timer.ts",
+        "src/shared/timer.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t19-notice-through-new-day.md",
+      "status": "todo"
+    },
+    {
+      "id": "T20",
+      "title": "Refuse timer commands that carry extra fields",
+      "layer": "domain",
+      "deps": [
+        "T19"
+      ],
+      "acs": [
+        "AC-02"
+      ],
+      "dod": "isTimerCommand rejects any unknown key, including confirmed on a simple command",
+      "files_hint": [
+        "src/shared/timer.ts",
+        "src/shared/timer.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t20-strict-command-guard.md",
+      "status": "todo"
+    },
+    {
+      "id": "T21",
+      "title": "Share one loss sentence between the quit dialog and Restart cycle",
+      "layer": "domain",
+      "deps": [
+        "T20"
+      ],
+      "acs": [
+        "AC-12",
+        "AC-13"
+      ],
+      "dod": "one pure lossMessage in src/shared/timer.ts, used by main and the renderer, with its tests alongside",
+      "files_hint": [
+        "src/shared/timer.ts",
+        "src/shared/timer.test.ts",
+        "src/main/quit-guard.ts",
+        "src/main/quit-guard.test.ts",
+        "src/renderer/src/screens/TimerScreen.tsx"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t21-shared-loss-message.md",
+      "status": "todo"
+    },
+    {
+      "id": "T22",
+      "title": "Ignore repeat clicks on the controls and keep focus on the primary button",
+      "layer": "ui",
+      "deps": [
+        "T21"
+      ],
+      "acs": [
+        "AC-02"
+      ],
+      "dod": "a double-click on any control has the effect of one click in the real window; keyboard focus stays on the primary button across Start, Pause and Resume",
+      "files_hint": [
+        "src/renderer/src/screens/TimerScreen.tsx",
+        "src/renderer/src/screens/TimerScreen.test.tsx",
+        "e2e/timer.spec.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t22-repeat-clicks-and-focus.md",
+      "status": "todo"
+    },
+    {
+      "id": "T23",
+      "title": "Link the Restart-cycle loss text to the dialog",
+      "layer": "ui",
+      "deps": [],
+      "acs": [
+        "AC-12"
+      ],
+      "dod": "the dialog has an accessible description holding its body text",
+      "files_hint": [
+        "src/renderer/src/components/ui/Dialog.tsx",
+        "src/renderer/src/components/ui/Dialog.test.tsx"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t23-dialog-description.md",
+      "status": "todo"
+    },
+    {
+      "id": "T24",
+      "title": "Expire the OS-initiated-quit flag after a cancelled logout",
+      "layer": "app",
+      "deps": [],
+      "acs": [
+        "AC-13"
+      ],
+      "dod": "after a cancelled logout or shutdown the guard asks again; a quit right after the system signal is still never asked about",
+      "files_hint": [
+        "src/main/quit-guard.ts",
+        "src/main/quit-guard.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t24-os-quit-flag-expiry.md",
+      "status": "todo"
+    },
+    {
+      "id": "T25",
+      "title": "Stop the timer window going full screen",
+      "layer": "infra",
+      "deps": [],
+      "acs": [
+        "AC-13"
+      ],
+      "dod": "the timer window is created with fullscreenable false, so hide-on-close cannot leave an empty Space",
+      "files_hint": [
+        "src/main/window.ts",
+        "src/main/window.test.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t25-not-fullscreenable.md",
+      "status": "todo"
+    },
+    {
+      "id": "T26",
+      "title": "Fill in the missing end-to-end rows of the test plan",
+      "layer": "tests",
+      "deps": [
+        "T22",
+        "T23",
+        "T24",
+        "T25"
+      ],
+      "acs": [
+        "AC-01",
+        "AC-03",
+        "AC-12",
+        "AC-13"
+      ],
+      "dod": "the test-plan e2e rows for AC-01, AC-03, AC-12, AC-13 and the spec §6 scenarios exist and pass; the latency check stops on the expected change",
+      "files_hint": [
+        "e2e/timer.spec.ts",
+        "e2e/boot.spec.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t26-e2e-test-plan-rows.md",
+      "status": "todo"
     }
   ]
 }
