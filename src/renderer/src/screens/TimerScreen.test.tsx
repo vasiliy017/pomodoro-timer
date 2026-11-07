@@ -52,6 +52,35 @@ beforeEach(() => {
 })
 
 describe('TimerScreen', () => {
+  describe('AC-02 repeat clicks', () => {
+    it.each(['Start', 'Restart cycle'])(
+      'ignores the second click of a double-click on %s',
+      (name) => {
+        show(snap('focus', 'ready'))
+        fireEvent.click(screen.getByRole('button', { name }), { detail: 2 })
+        expect(send).not.toHaveBeenCalled()
+      }
+    )
+
+    it('a single click and a keyboard press (detail 0) both send', () => {
+      show(snap('focus', 'ready'))
+      fireEvent.click(screen.getByRole('button', { name: 'Start' }), { detail: 1 })
+      fireEvent.click(screen.getByRole('button', { name: 'Start' }), { detail: 0 })
+      expect(send).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  it('keeps keyboard focus on the primary button across Start, Pause and Resume', () => {
+    const { rerender } = show(snap('focus', 'ready'))
+    screen.getByRole('button', { name: 'Start' }).focus()
+    hook.mockReturnValue({ snapshot: snap('focus', 'running'), remainingMs: 25 * MIN, send })
+    rerender(<TimerScreen />)
+    expect(screen.getByRole('button', { name: 'Pause' })).toHaveFocus()
+    hook.mockReturnValue({ snapshot: snap('focus', 'paused'), remainingMs: 25 * MIN, send })
+    rerender(<TimerScreen />)
+    expect(screen.getByRole('button', { name: 'Resume' })).toHaveFocus()
+  })
+
   describe('AC-01 labels', () => {
     it('shows focus session 1 of 4 ready at 25:00 on launch', () => {
       show(snap('focus', 'ready'))

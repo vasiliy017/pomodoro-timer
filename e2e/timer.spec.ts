@@ -34,6 +34,8 @@ interface PageGlobals {
 const CONTROL_BUDGET_MS = 100
 /** spec.md §6: scheduled phase end → on-screen change, window hidden. */
 const PHASE_END_BUDGET_MS = 1_000
+/** Longer than the command's round trip, shorter than any OS double-click interval. */
+const DOUBLE_CLICK_GAP_MS = 150
 
 interface Launched {
   app: ElectronApplication
@@ -99,6 +101,26 @@ async function timeClick(window: Page, label: string, scope = 'main'): Promise<n
   )
 }
 
+/** A real double-click: the second press lands where the first did, after the app has reacted. */
+async function doubleClick(window: Page, name: string): Promise<void> {
+  const box = await window.getByRole('button', { name, exact: true }).boundingBox()
+  if (!box) throw new Error(`no button «${name}»`)
+  await window.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await window.mouse.down({ clickCount: 1 })
+  await window.mouse.up({ clickCount: 1 })
+  await window.waitForTimeout(DOUBLE_CLICK_GAP_MS)
+  await window.mouse.down({ clickCount: 2 })
+  await window.mouse.up({ clickCount: 2 })
+  await window.waitForTimeout(DOUBLE_CLICK_GAP_MS)
+}
+
+async function revision(window: Page): Promise<number> {
+  return window.evaluate(async () => {
+    const result = await (globalThis as unknown as PageGlobals).api.timerGetState()
+    return result.ok ? result.value.revision : -1
+  })
+}
+
 test.describe('timer flows', () => {
   test('every control shows its change within 100 ms (spec §6)', async () => {
     const { window, close } = await launch({ focusMs: 60_000, shortBreakMs: 60_000 })
@@ -126,6 +148,26 @@ test.describe('timer flows', () => {
         expect(ms, `${label} took ${ms.toFixed(1)} ms`).toBeLessThanOrEqual(CONTROL_BUDGET_MS)
       }
       await expect(window.getByRole('dialog')).toBeHidden()
+    } finally {
+      await close()
+    }
+  })
+
+  test('a double-click on any control has the effect of one click (AC-02)', async () => {
+    const { window, close } = await launch({ focusMs: 60_000, shortBreakMs: 60_000 })
+    try {
+      const steps: [string, () => Promise<void>][] = [
+        ['Start', () => expect(window.getByText('Running')).toBeVisible()],
+        ['Pause', () => expect(window.getByText('Paused')).toBeVisible()],
+        ['Resume', () => expect(window.getByText('Running')).toBeVisible()],
+        ['Skip', () => expect(window.getByRole('heading', { name: 'Short break' })).toBeVisible()]
+      ]
+      for (const [name, check] of steps) {
+        const before = await revision(window)
+        await doubleClick(window, name)
+        await check()
+        expect(await revision(window), `double-click on ${name}`).toBe(before + 1)
+      }
     } finally {
       await close()
     }

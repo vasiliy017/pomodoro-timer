@@ -438,7 +438,7 @@
         "e2e/timer.spec.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t22-repeat-clicks-and-focus.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T23",

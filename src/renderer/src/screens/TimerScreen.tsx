@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type MouseEvent } from 'react'
 import {
   lossMessage,
   type Controls,
@@ -48,6 +48,16 @@ function noticeText(notice: Notice): string {
       : 'Break ended while the Mac was asleep'
   }
   return focus ? 'Focus session complete' : 'Break over'
+}
+
+/**
+ * The second click of a double-click lands on whatever replaced the button by then, as a valid
+ * command at the new revision, so it is dropped here (AC-02). A keyboard press has detail 0.
+ */
+function onSingleClick(action: () => void) {
+  return (event: MouseEvent) => {
+    if (event.detail <= 1) action()
+  }
 }
 
 type ControlName = Exclude<keyof Controls, 'restartCycle'>
@@ -117,15 +127,16 @@ export function TimerScreen() {
           .filter(({ name }) => controls[name])
           .map(({ name, label, primary }) => (
             <Button
-              key={name}
+              // One key for the primary slot: the same button stays, so it keeps keyboard focus.
+              key={primary ? 'primary' : name}
               variant={primary ? 'primary' : 'secondary'}
-              onClick={() => void send(name)}
+              onClick={onSingleClick(() => void send(name))}
             >
               {label}
             </Button>
           ))}
         {controls.restartCycle && (
-          <Button onClick={() => void restartCycle()}>Restart cycle</Button>
+          <Button onClick={onSingleClick(() => void restartCycle())}>Restart cycle</Button>
         )}
       </div>
 

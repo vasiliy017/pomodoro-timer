@@ -9,8 +9,8 @@ files_hint: ["src/renderer/src/screens/TimerScreen.tsx", "src/renderer/src/scree
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: "—"
+status: "done"
+step: "COMMIT"
 ---
 
 # T22 — Ignore repeat clicks on the controls and keep focus on the primary button
