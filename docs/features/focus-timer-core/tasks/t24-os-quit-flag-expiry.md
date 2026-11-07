@@ -9,8 +9,8 @@ files_hint: ["src/main/quit-guard.ts", "src/main/quit-guard.test.ts"]
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: "—"
+status: "done"
+step: "COMMIT"
 ---
 
 # T24 — Expire the OS-initiated-quit flag after a cancelled logout

@@ -31,7 +31,7 @@
 | T21 | Share one loss sentence between the quit dialog and Restart cycle | domain | Vasiliy | S | T20 | done | COMMIT |
 | T22 | Ignore repeat clicks on the controls and keep focus on the primary button | ui | Vasiliy | S | T21 | done | COMMIT |
 | T23 | Link the Restart-cycle loss text to the dialog | ui | Vasiliy | S | — | done | COMMIT |
-| T24 | Expire the OS-initiated-quit flag after a cancelled logout | app | Vasiliy | S | — | in_progress | GATE |
+| T24 | Expire the OS-initiated-quit flag after a cancelled logout | app | Vasiliy | S | — | done | COMMIT |
 | T25 | Stop the timer window going full screen | infra | Vasiliy | S | — | in_progress | GATE |
 | T26 | Fill in the missing end-to-end rows of the test plan | tests | Vasiliy | M | T22, T23, T24, T25 | in_progress | RED |
 

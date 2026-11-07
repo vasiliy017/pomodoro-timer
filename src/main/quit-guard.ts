@@ -12,12 +12,20 @@ export interface QuitGuardOptions {
 }
 
 /**
+ * How long after the system's shutdown signal a quit still counts as macOS's own. Long enough for
+ * macOS to get through the apps ahead of this one, so the guard never blocks a real logout; once
+ * it passes, a logout that was cancelled no longer disarms the guard for good.
+ */
+export const OS_QUIT_WINDOW_MS = 60_000
+
+/**
  * Asks before a User quit (Cmd+Q, Dock, app menu) that would lose progress (AC-13, sad.md §6
  * Flow 8). A quit macOS starts for logout, restart or shutdown is never asked about or blocked.
  */
 export function installQuitGuard(options: QuitGuardOptions): { markOsInitiatedQuit(): void } {
   const { app, getLoss, showConfirm, onQuitAllowed } = options
   let osInitiated = false
+  let osWindow: ReturnType<typeof setTimeout> | undefined
   let confirmed = false
   let asking = false
 
@@ -40,6 +48,8 @@ export function installQuitGuard(options: QuitGuardOptions): { markOsInitiatedQu
   return {
     markOsInitiatedQuit() {
       osInitiated = true
+      clearTimeout(osWindow)
+      osWindow = setTimeout(() => (osInitiated = false), OS_QUIT_WINDOW_MS)
     }
   }
 }

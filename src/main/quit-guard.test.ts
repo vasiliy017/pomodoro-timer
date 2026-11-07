@@ -1,11 +1,11 @@
 import { EventEmitter } from 'node:events'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { lossMessage, type RestartLoss } from '@shared/timer'
 
 const electron = vi.hoisted(() => ({ dialog: { showMessageBox: vi.fn() } }))
 vi.mock('electron', () => ({ dialog: electron.dialog }))
 
-const { installQuitGuard, showQuitConfirmation } = await import('./quit-guard')
+const { installQuitGuard, OS_QUIT_WINDOW_MS, showQuitConfirmation } = await import('./quit-guard')
 
 class FakeApp extends EventEmitter {
   quit = vi.fn(() => {
@@ -72,6 +72,42 @@ describe('installQuitGuard', () => {
     expect(app.requestQuit()).toBe(false)
     expect(showConfirm).not.toHaveBeenCalled()
     expect(onQuitAllowed).toHaveBeenCalledOnce()
+  })
+
+  describe('a logout or shutdown that gets cancelled', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('asks again once the OS quit window has passed', () => {
+      showConfirm.mockResolvedValue(false)
+      const guard = install()
+      guard.markOsInitiatedQuit()
+      vi.advanceTimersByTime(OS_QUIT_WINDOW_MS)
+      expect(app.requestQuit()).toBe(true)
+      expect(showConfirm).toHaveBeenCalledOnce()
+    })
+
+    it('still never asks inside the window', () => {
+      const guard = install()
+      guard.markOsInitiatedQuit()
+      vi.advanceTimersByTime(OS_QUIT_WINDOW_MS - 1)
+      expect(app.requestQuit()).toBe(false)
+      expect(showConfirm).not.toHaveBeenCalled()
+    })
+
+    it('a second system signal restarts the window', () => {
+      const guard = install()
+      guard.markOsInitiatedQuit()
+      vi.advanceTimersByTime(OS_QUIT_WINDOW_MS - 1)
+      guard.markOsInitiatedQuit()
+      vi.advanceTimersByTime(OS_QUIT_WINDOW_MS - 1)
+      expect(app.requestQuit()).toBe(false)
+    })
   })
 
   it('a second Cmd+Q while the dialog is open shows no second dialog', async () => {

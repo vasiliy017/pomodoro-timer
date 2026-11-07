@@ -470,7 +470,7 @@
         "src/main/quit-guard.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t24-os-quit-flag-expiry.md",
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "T25",
