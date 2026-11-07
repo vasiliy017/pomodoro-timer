@@ -119,7 +119,8 @@ function checkStep(prev: TimerState, step: Step, r: TransitionResult): void {
   const counted = next.completedInCycle > prev.completedInCycle
   const notice = next.notice
   const countedEnd =
-    next.revision !== prev.revision &&
+    // A new-day reset keeps the same notice object; a phase end always makes a new one.
+    notice !== prev.notice &&
     notice?.kind === 'phaseEnded' &&
     notice.endedPhase === 'focus' &&
     notice.counted
