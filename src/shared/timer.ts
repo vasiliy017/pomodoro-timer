@@ -238,7 +238,8 @@ export type TimerInput =
 
 /**
  * Side effects main carries out after a transition, in order. A phase end gives one `notify`
- * then one `bounceDock` (AC-05, AC-06), never more per transition. Commands have none.
+ * then one `bounceDock` (AC-05, AC-06), never more per transition. A command has none of its own,
+ * but one that reaches a running phase already past `endsAt` carries that phase end's effects.
  */
 export type TimerEffect =
   | {

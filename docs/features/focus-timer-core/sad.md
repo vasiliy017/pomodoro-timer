@@ -379,6 +379,14 @@ sequenceDiagram
         UI->>S: Sends a command the control table does not allow here
         S->>S: The control table or the type guard rejects it, nothing changes
         S-->>UI: Outcome ignored
+    else The running phase was already due when the command arrived
+        UI->>S: Sends a command at revision r+2, a few ms after endsAt or before a late wake
+        S->>S: Ends the phase first by the wake rule, counted or ended-while-asleep, revision r+3
+        Note over S: the phase-end notification and Dock bounce fire as in Flow 5
+        S->>S: The command's revision is now stale, so the command itself does nothing
+        S-->>UI: Snapshot, the next phase ready with its notice, at revision r+3
+        S-->>UI: Outcome ignored
+        UI-->>U: Shows the phase-end notice and the next phase
     end
     Note over U,S: Postcondition: at most one phase runs, nothing is counted twice, only the offered controls are shown
 ```
@@ -477,7 +485,7 @@ sequenceDiagram
         UI-->>U: Closes the dialog, nothing is sent and nothing changes
     else The state changed while the dialog was open
         UI->>S: Sends restartCycle at revision r, confirmed
-        S->>S: The revision is stale, so nothing changes
+        S->>S: The revision is stale, so the command does nothing (a phase already due ends first, as in Flow 4)
         S-->>UI: Outcome ignored
         UI-->>U: Shows the current snapshot, the User can choose Restart cycle again
     else Instead nothing would be lost, the cycle is at 0 and the phase is ready

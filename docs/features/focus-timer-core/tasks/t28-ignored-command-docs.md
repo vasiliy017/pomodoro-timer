@@ -9,8 +9,8 @@ files_hint: ["docs/features/focus-timer-core/contracts/public-api.md", "docs/fea
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: ""
+status: "done"
+step: "COMMIT"
 ---
 
 # T28 — Document that an ignored command can first settle a phase that is already due
@@ -19,7 +19,7 @@ Follow-up from the review: finding(s) N3 in [review-2026-11-07.md](../_review/re
 
 ## Definition of Done
 
-- [ ] `public-api.md` §1 (invariants) and §2 (return table) say an ignored command can first settle a phase that is already due, or start the new day, and that its snapshot then carries a newer revision
-- [ ] `sad.md` Flow 4 (and Flow 6 where it applies) has an `alt` branch: the phase was already due, so it ends first, with its signals, and the command is stale
-- [ ] the effects comment at `src/shared/timer.ts:241` matches the behaviour
-- [ ] Unit tests, lint and typecheck are clean
+- [x] `public-api.md` §1 (invariants) and §2 (return table) say an ignored command can first settle a phase that is already due, or start the new day, and that its snapshot then carries a newer revision
+- [x] `sad.md` Flow 4 (and Flow 6 where it applies) has an `alt` branch: the phase was already due, so it ends first, with its signals, and the command is stale
+- [x] the effects comment at `src/shared/timer.ts:241` matches the behaviour
+- [x] Unit tests, lint and typecheck are clean

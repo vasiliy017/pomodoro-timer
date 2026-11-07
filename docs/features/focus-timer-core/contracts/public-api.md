@@ -116,7 +116,15 @@ export function isTimerCommand(value: unknown): value is TimerCommand
 - `needsConfirmation` is returned only for `restartCycle` with `confirmed: false` when the loss is
   non-empty (`completedInCycle > 0 || phaseInProgress !== null`). Its snapshot is unchanged and its
   revision stays current.
-- `ignored` never changes state, so `snapshot.revision` is the current, unchanged revision.
+- `ignored` means the command itself had no effect. Two things can still happen before it is
+  judged, and both bump the revision, so the command is then stale:
+  - a running phase whose `endsAt` has already passed ends first, by the wake rule (counted, or
+    `endedWhileAsleep` when the end passed after `sleptAt`), with its notice and its `notify` and
+    `bounceDock` effects (AC-05, AC-07, AC-14);
+  - a new local day starts first (AC-15).
+
+  Otherwise state is unchanged. Either way `snapshot.revision` is the current revision, which may be
+  newer than the one the command carried. The renderer keeps the highest revision it has seen.
 
 ## 2. Invoke calls (renderer → main)
 
@@ -147,6 +155,7 @@ expected case is an `ok: true` outcome:
 |---|---|
 | Command applied (Flows 1, 4, 5, 6, 7 confirm, 9) | `ok` → `applied` |
 | Stale revision: double-click, late command, stale dialog (Flow 4 alt 1, Flow 7 alt 3) | `ok` → `ignored` / `staleRevision` |
+| Command reaches a running phase that is already due, or a new day (Flow 4 alt 3, Flow 9) | `ok` → `ignored` / `staleRevision`, with the settled snapshot at a newer revision; the phase-end signals still fire |
 | Command not offered in this state (Flow 4 alt 2, Flow 6 postcondition) | `ok` → `ignored` / `notAllowed` |
 | Malformed payload (Flow 4 alt 2, spec §6.1) | `ok` → `ignored` / `malformed` |
 | Restart cycle would lose progress, unconfirmed (Flow 7) | `ok` → `needsConfirmation` + `loss` |
