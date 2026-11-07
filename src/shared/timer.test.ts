@@ -204,7 +204,11 @@ describe('isTimerCommand', () => {
     { type: 'start', revision: 1.5 },
     { type: 'start', revision: '1' },
     { type: 'restartCycle', revision: 3 },
-    { type: 'restartCycle', revision: 3, confirmed: 'yes' }
+    { type: 'restartCycle', revision: 3, confirmed: 'yes' },
+    { type: 'start', revision: 0, endsAt: 1 },
+    { type: 'pause', revision: 0, phase: 'focus' },
+    { type: 'skip', revision: 0, confirmed: true },
+    { type: 'restartCycle', revision: 0, confirmed: true, completedInCycle: 0 }
   ])('rejects %j', (value) => {
     expect(isTimerCommand(value)).toBe(false)
   })

@@ -397,7 +397,7 @@
         "src/shared/timer.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t20-strict-command-guard.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T21",

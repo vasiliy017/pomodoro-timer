@@ -195,6 +195,7 @@ export function isTimerCommand(value: unknown): value is TimerCommand {
   if (typeof value !== 'object' || value === null) return false
   const { type, revision, confirmed } = value as Record<string, unknown>
   if (typeof revision !== 'number' || !Number.isInteger(revision) || revision < 0) return false
+  if (Object.keys(value).length !== (type === 'restartCycle' ? 3 : 2)) return false
   if (type === 'restartCycle') return typeof confirmed === 'boolean'
   return typeof type === 'string' && SIMPLE_COMMANDS.includes(type)
 }

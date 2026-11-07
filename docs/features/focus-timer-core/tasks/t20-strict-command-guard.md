@@ -9,8 +9,8 @@ files_hint: ["src/shared/timer.ts", "src/shared/timer.test.ts"]
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: "—"
+status: "done"
+step: "COMMIT"
 ---
 
 # T20 — Refuse timer commands that carry extra fields
