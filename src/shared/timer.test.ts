@@ -834,6 +834,88 @@ describe('transition — sleep and wake (AC-14)', () => {
   })
 })
 
+describe('transition — a command on a phase that is already due (AC-05, AC-07, AC-14)', () => {
+  const HOUR = 60 * MIN
+
+  it('a Pause before the late wake settles the session as ended asleep: uncounted, one notify', () => {
+    const s = runningFocus(15 * MIN, { completedInCycle: 1, sleptAt: T0 })
+    const r = command(s, { type: 'pause', revision: 5 }, T0 + 2 * HOUR)
+    const notice = { kind: 'endedWhileAsleep', endedPhase: 'focus', counted: false }
+    expect(r.outcome).toEqual({ kind: 'ignored', reason: 'staleRevision' })
+    expect(r.state).toMatchObject({
+      phase: 'shortBreak',
+      status: 'ready',
+      completedInCycle: 1,
+      revision: 6,
+      notice
+    })
+    expect(r.effects).toEqual([
+      { kind: 'notify', notice, next: { phase: 'shortBreak', focusNumber: null } },
+      { kind: 'bounceDock' }
+    ])
+    // The real wake arrives afterwards and changes nothing.
+    expect(send(r.state, { kind: 'wake' }, T0 + 2 * HOUR + 1).state).toBe(r.state)
+  })
+
+  it('a Skip a few ms past the end counts the session instead of dropping it', () => {
+    const s = runningFocus(0, { completedInCycle: 1 })
+    const r = command(s, { type: 'skip', revision: 5 }, T0 + 3)
+    const notice = { kind: 'phaseEnded', endedPhase: 'focus', counted: true }
+    expect(r.outcome).toEqual({ kind: 'ignored', reason: 'staleRevision' })
+    expect(r.state).toMatchObject({ phase: 'shortBreak', completedInCycle: 2, notice })
+    expect(r.effects).toEqual([
+      { kind: 'notify', notice, next: { phase: 'shortBreak', focusNumber: null } },
+      { kind: 'bounceDock' }
+    ])
+  })
+
+  it('settles at exactly the end time', () => {
+    const r = command(runningFocus(0), { type: 'pause', revision: 5 }, T0)
+    expect(r.state).toMatchObject({ phase: 'shortBreak', status: 'ready', completedInCycle: 1 })
+  })
+
+  it('a confirmed Restart cycle aimed at the finished phase is ignored, the count stands', () => {
+    const s = runningFocus(0, { completedInCycle: 1 })
+    const r = command(s, { type: 'restartCycle', revision: 5, confirmed: true }, T0 + HOUR)
+    expect(r.outcome).toEqual({ kind: 'ignored', reason: 'staleRevision' })
+    expect(r.state).toMatchObject({ phase: 'shortBreak', completedInCycle: 2 })
+  })
+
+  it('a break already due ends into the next focus session', () => {
+    const s = state({
+      phase: 'shortBreak',
+      durationMs: 5 * MIN,
+      status: 'running',
+      endsAt: T0,
+      completedInCycle: 1,
+      revision: 5
+    })
+    const r = command(s, { type: 'reset', revision: 5 }, T0 + 1)
+    expect(r.state).toMatchObject({ phase: 'focus', status: 'ready', completedInCycle: 1 })
+    expect(r.state.notice).toMatchObject({ kind: 'phaseEnded', endedPhase: 'shortBreak' })
+  })
+
+  it('a session due across midnight settles, then the fresh cycle starts', () => {
+    const s = runningFocus(0, { completedInCycle: 2 })
+    const r = command(s, { type: 'pause', revision: 5 }, T0 + 1, '2026-11-01')
+    expect(r.state).toMatchObject({
+      phase: 'focus',
+      status: 'ready',
+      completedInCycle: 0,
+      cycleDate: '2026-11-01',
+      notice: { kind: 'phaseEnded', endedPhase: 'focus', counted: true }
+    })
+  })
+
+  it('a command with time still left applies as usual, even before a late wake', () => {
+    const s = runningFocus(15 * MIN, { sleptAt: T0 })
+    const r = command(s, { type: 'pause', revision: 5 }, T0 + 5 * MIN)
+    expect(r.outcome).toEqual({ kind: 'applied' })
+    expect(r.state).toMatchObject({ status: 'paused', remainingMs: 10 * MIN, sleptAt: null })
+    expect(r.effects).toEqual([])
+  })
+})
+
 describe('transition — new day (AC-15)', () => {
   const TOMORROW = '2026-11-01'
 

@@ -95,6 +95,7 @@ function checkStep(prev: TimerState, step: Step, r: TransitionResult): void {
   const next = r.state
   const { input, now, localDate } = step
   const newDay = prev.status !== 'running' && localDate > prev.cycleDate
+  const overdue = prev.status === 'running' && prev.endsAt !== null && prev.endsAt <= now
 
   // One phase at a time, with exactly the fields of its status.
   if ((next.endsAt !== null) !== (next.status === 'running')) fail('endsAt does not match status')
@@ -146,9 +147,25 @@ function checkStep(prev: TimerState, step: Step, r: TransitionResult): void {
     if (!restart && !longBreakOver && !newDay && !crossedDay) fail('cycle reset outside the list')
   }
 
-  // Commands: ignored and needsConfirmation never change state, except the new-day rule.
-  if (input.kind === 'command' && r.outcome.kind !== 'applied' && !newDay && next !== prev) {
+  // Commands: ignored and needsConfirmation never change state, except the new-day rule and the
+  // settling of a phase that was already due.
+  if (
+    input.kind === 'command' &&
+    r.outcome.kind !== 'applied' &&
+    !newDay &&
+    !overdue &&
+    next !== prev
+  ) {
     fail(`${r.outcome.kind} changed the state`)
+  }
+  // A command never acts on a phase that has already ended: the phase end comes first.
+  if (input.kind === 'command' && overdue) {
+    if (next.revision <= prev.revision || next.notice === null) {
+      fail('a command skipped the end of a phase that was already due')
+    }
+    if (r.effects.filter((e) => e.kind === 'notify').length !== 1) {
+      fail('a settled phase end did not notify')
+    }
   }
   if (r.outcome.kind === 'needsConfirmation') {
     const cmd = input.kind === 'command' ? input.command : null
@@ -172,6 +189,8 @@ function runSequence(seed: number): void {
   let s = createInitialState(localDateOf(now), config)
   const seen = [s.revision]
   const steps: Step[] = []
+  // A command reached a session whose end had already passed while the Mac slept (AC-14).
+  let endedAsleep = false
 
   for (let i = 0; i < STEPS; i++) {
     const step = generateStep(rand, s, now, seen)
@@ -179,6 +198,17 @@ function runSequence(seed: number): void {
     const r = transition(s, step.input, step.now, step.localDate, config)
     try {
       checkStep(s, step, r)
+      endedAsleep ||=
+        step.input.kind === 'command' &&
+        s.phase === 'focus' &&
+        s.sleptAt !== null &&
+        s.endsAt !== null &&
+        s.endsAt > s.sleptAt &&
+        s.endsAt <= step.now
+      if (endedAsleep && r.state.completedInCycle > s.completedInCycle) {
+        throw new Error('counted a focus session that ended while the Mac was asleep')
+      }
+      if (r.state.status === 'ready') endedAsleep = false
     } catch (error) {
       const replay = steps.map((st) => JSON.stringify(st)).join('\n  ')
       throw new Error(

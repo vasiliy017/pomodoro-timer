@@ -9,8 +9,8 @@ files_hint: ["src/shared/timer.ts", "src/shared/timer.test.ts", "src/shared/time
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: "—"
+status: "done"
+step: "COMMIT"
 ---
 
 # T18 — Settle a phase that is already due before judging a command

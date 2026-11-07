@@ -360,7 +360,7 @@
         "src/shared/timer.property.test.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t18-settle-overdue-phase.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T19",

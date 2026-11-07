@@ -245,7 +245,8 @@ export interface TransitionResult {
  * `YYYY-MM-DD`; both come from main's clock. An input that changes nothing returns the same state
  * object. The new-day rule (AC-15) runs in every transition: before a command is judged, so a
  * command aimed at yesterday's phase is stale, and after a system input, so a sleep result or a
- * phase end applies first.
+ * phase end applies first. A running phase that is already due ends before a command is judged too,
+ * so a command that overtook the deadline or the wake input can't act on the finished phase.
  */
 export function transition(
   state: TimerState,
@@ -255,6 +256,12 @@ export function transition(
   config: TimerConfig
 ): TransitionResult {
   if (input.kind === 'command') {
+    if (state.status === 'running' && state.endsAt !== null && now >= state.endsAt) {
+      // A command proves the Mac is awake, so the wake rule decides how the phase ended.
+      const settled = transition(state, { kind: 'wake' }, now, localDate, config)
+      const judged = applyCommand(settled.state, input.command, now, localDate, config)
+      return { ...judged, effects: settled.effects }
+    }
     return applyCommand(
       startNewDay(state, localDate, config),
       input.command,
