@@ -22,6 +22,10 @@ interface PageGlobals {
     body: { textContent: string | null }
     querySelector(selector: string): { textContent: string | null } | null
     querySelectorAll(selector: string): Iterable<{ textContent: string | null; click(): void }>
+    elementFromPoint(
+      x: number,
+      y: number
+    ): { closest(selector: string): { textContent: string | null } | null } | null
   }
   performance: { now(): number }
   requestAnimationFrame(callback: () => void): number
@@ -42,6 +46,11 @@ const PHASE_END_BUDGET_MS = 1_000
 const PHASE_ENDS = 5
 /** Longer than the command's round trip, shorter than any OS double-click interval. */
 const DOUBLE_CLICK_GAP_MS = 150
+/** Longer than macOS's key-repeat delay is short: each repeat arrives after the round trip. */
+const KEY_REPEAT_GAP_MS = 100
+const KEY_REPEATS = 4
+/** A losing second instance quits at once; past this it is treated as a hang and killed. */
+const SECOND_INSTANCE_TIMEOUT_MS = 10_000
 
 interface Launched {
   app: ElectronApplication
@@ -87,8 +96,19 @@ function launchSecondInstance(userData: string): Promise<number | null> {
   const electronPath = createRequire(import.meta.url)('electron') as string
   return new Promise((resolve, reject) => {
     const child = spawn(electronPath, ['.', `--user-data-dir=${userData}`], { env: hostEnv })
-    child.once('error', reject)
-    child.once('exit', resolve)
+    // If the single-instance handover breaks, the child opens its own window and never exits.
+    const timer = setTimeout(() => {
+      child.kill()
+      reject(new Error(`second instance did not quit within ${SECOND_INSTANCE_TIMEOUT_MS} ms`))
+    }, SECOND_INSTANCE_TIMEOUT_MS)
+    child.once('error', (error) => {
+      clearTimeout(timer)
+      reject(error)
+    })
+    child.once('exit', (code) => {
+      clearTimeout(timer)
+      resolve(code)
+    })
   })
 }
 
@@ -131,17 +151,37 @@ async function timeClick(
   )
 }
 
-/** A real double-click: the second press lands where the first did, after the app has reacted. */
-async function doubleClick(window: Page, name: string): Promise<void> {
+/**
+ * A real double-click: the second press lands where the first did, after the app has reacted.
+ * `at` is the press point as a fraction of the button's box. It is chosen so that the control
+ * replacing this one sits under the pointer, and the second press is checked to hit a control, so
+ * a layout change fails the test instead of letting the second press land on empty space.
+ * Returns the label of the control the second press landed on.
+ */
+async function doubleClick(
+  window: Page,
+  name: string,
+  at = { x: 0.5, y: 0.5 }
+): Promise<string | null> {
   const box = await window.getByRole('button', { name, exact: true }).boundingBox()
   if (!box) throw new Error(`no button «${name}»`)
-  await window.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  const x = box.x + box.width * at.x
+  const y = box.y + box.height * at.y
+  await window.mouse.move(x, y)
   await window.mouse.down({ clickCount: 1 })
   await window.mouse.up({ clickCount: 1 })
   await window.waitForTimeout(DOUBLE_CLICK_GAP_MS)
+  const under = await window.evaluate(
+    ({ x, y }) =>
+      (globalThis as unknown as PageGlobals).document.elementFromPoint(x, y)?.closest('button')
+        ?.textContent ?? null,
+    { x, y }
+  )
+  expect(under, `the second press on «${name}» must land on a control`).not.toBeNull()
   await window.mouse.down({ clickCount: 2 })
   await window.mouse.up({ clickCount: 2 })
   await window.waitForTimeout(DOUBLE_CLICK_GAP_MS)
+  return under
 }
 
 async function revision(window: Page): Promise<number> {
@@ -230,18 +270,72 @@ test.describe('timer flows', () => {
   test('a double-click on any control has the effect of one click (AC-02)', async () => {
     const { window, close } = await launch({ focusMs: 60_000, shortBreakMs: 60_000 })
     try {
-      const steps: [string, () => Promise<void>][] = [
-        ['Start', () => expect(window.getByText('Running')).toBeVisible()],
-        ['Pause', () => expect(window.getByText('Paused')).toBeVisible()],
-        ['Resume', () => expect(window.getByText('Running')).toBeVisible()],
-        ['Skip', () => expect(window.getByRole('heading', { name: 'Short break' })).toBeVisible()]
+      // Each press point puts the control that replaces this one under the pointer (420×560
+      // window): the top of Start lies under the running Pause; Pause and Resume share a slot; the
+      // left of a break's Skip lies under the next focus session's Start.
+      const steps: [string, { x: number; y: number }, string, () => Promise<void>][] = [
+        [
+          'Start',
+          { x: 0.4, y: 0.2 },
+          'Pause',
+          () => expect(window.getByText('Running')).toBeVisible()
+        ],
+        [
+          'Pause',
+          { x: 0.5, y: 0.5 },
+          'Resume',
+          () => expect(window.getByText('Paused')).toBeVisible()
+        ],
+        [
+          'Resume',
+          { x: 0.5, y: 0.5 },
+          'Pause',
+          () => expect(window.getByText('Running')).toBeVisible()
+        ],
+        [
+          'Skip',
+          { x: 0.2, y: 0.35 },
+          'Start',
+          async () => {
+            await expect(
+              window.getByRole('heading', { name: 'Focus session 1 of 4' })
+            ).toBeVisible()
+            await expect(window.getByText('Ready')).toBeVisible()
+          }
+        ]
       ]
-      for (const [name, check] of steps) {
+      for (const [name, at, replacement, check] of steps) {
+        if (name === 'Skip') {
+          // AC-02's example: Skip on the ready break, and the second press must not start the
+          // focus session that replaced it. One plain Skip first moves from running to the break.
+          await window.getByRole('button', { name: 'Skip', exact: true }).click()
+          await expect(window.getByRole('heading', { name: 'Short break' })).toBeVisible()
+        }
         const before = await revision(window)
-        await doubleClick(window, name)
+        expect(await doubleClick(window, name, at), `under the second press on ${name}`).toBe(
+          replacement
+        )
         await check()
         expect(await revision(window), `double-click on ${name}`).toBe(before + 1)
       }
+    } finally {
+      await close()
+    }
+  })
+
+  test('holding Enter on a focused control has the effect of one press (AC-02)', async () => {
+    const { window, close } = await launch({ focusMs: 60_000, shortBreakMs: 60_000 })
+    try {
+      await window.getByRole('button', { name: 'Start', exact: true }).focus()
+      const before = await revision(window)
+      // The first keydown, then auto-repeats (Playwright marks a keydown on a held key repeat).
+      for (let press = 0; press <= KEY_REPEATS; press++) {
+        await window.keyboard.down('Enter')
+        await window.waitForTimeout(KEY_REPEAT_GAP_MS)
+      }
+      await window.keyboard.up('Enter')
+      await expect(window.getByText('Running')).toBeVisible()
+      expect(await revision(window), 'held Enter on Start').toBe(before + 1)
     } finally {
       await close()
     }
@@ -366,17 +460,27 @@ test.describe('timer flows', () => {
     const userData = mkdtempSync(join(tmpdir(), 'pomodoro-e2e-'))
     try {
       const before = await launch({ focusMs: 1_000, shortBreakMs: 60_000 }, userData)
-      await before.window.getByRole('button', { name: 'Start', exact: true }).click()
-      await expect(before.window.getByText('1 of 4 completed')).toBeVisible({ timeout: 5_000 })
-      await before.window.getByRole('button', { name: 'Start', exact: true }).click()
-      await expect(before.window.getByText('Running')).toBeVisible()
-      await before.close()
+      try {
+        await before.window.getByRole('button', { name: 'Start', exact: true }).click()
+        await expect(before.window.getByText('1 of 4 completed')).toBeVisible({ timeout: 5_000 })
+        await before.window.getByRole('button', { name: 'Start', exact: true }).click()
+        await expect(before.window.getByText('Running')).toBeVisible()
+      } finally {
+        await before.close()
+      }
 
       const after = await launch({}, userData)
       try {
         await expect(after.window.getByText('Ready')).toBeVisible()
         await expect(after.window.getByRole('timer')).toHaveText('25:00')
-        await expect(after.window.getByText('of 4 completed')).toBeHidden()
+        // The heading launch() waited for says focus session 1 of 4; the state says nothing carried.
+        const fresh = await after.window.evaluate(async () => {
+          const result = await (globalThis as unknown as PageGlobals).api.timerGetState()
+          return result.ok
+            ? { completedInCycle: result.value.completedInCycle, revision: result.value.revision }
+            : null
+        })
+        expect(fresh).toEqual({ completedInCycle: 0, revision: 0 })
       } finally {
         await after.close()
       }

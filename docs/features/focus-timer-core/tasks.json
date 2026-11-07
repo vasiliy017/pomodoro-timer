@@ -563,7 +563,7 @@
         "e2e/timer.spec.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t29-e2e-tests-that-can-fail.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T30",
