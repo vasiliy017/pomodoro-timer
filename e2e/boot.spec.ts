@@ -37,8 +37,10 @@ for (let launch = 1; launch <= COLD_LAUNCHES; launch++) {
       await expect(window.getByRole('button', { name: 'Start', exact: true })).toBeVisible()
 
       // Measured inside the app, so Playwright's attach time doesn't count: from main's process
-      // start to the first paint of the ready heading (Element Timing, `elementtiming` on the h1).
-      const processStartedAt = await app.evaluate(() => Date.now() - process.uptime() * 1000)
+      // start (its performance.timeOrigin, not process.uptime(), which starts later, once Node is
+      // up) to the first paint of the ready heading (Element Timing, `elementtiming` on the h1).
+      // Both ends are epoch milliseconds on the same machine clock.
+      const processStartedAt = await app.evaluate(() => performance.timeOrigin)
       const headingPaintedAt = await window.evaluate(
         () =>
           new Promise<number | null>((resolve) => {

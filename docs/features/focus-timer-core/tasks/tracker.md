@@ -40,6 +40,6 @@
 | T30 | Measure launch time inside the app | tests | Vasiliy | S | T29 | done | COMMIT |
 | T31 | Ignore held-key repeats on every button, the dialog's included | ui | Vasiliy | S | — | done | COMMIT |
 | T32 | Forget the focused control when focus leaves the controls | ui | Vasiliy | S | T31 | done | COMMIT |
-| T33 | Start the launch clock at main's process start | tests | Vasiliy | S | — | todo | — |
+| T33 | Start the launch clock at main's process start | tests | Vasiliy | S | — | done | COMMIT |
 
 **Total:** 33 tasks (T18–T33 are review follow-ups), ~22 person-days (S ≈ ½ day, M ≈ 1 day).

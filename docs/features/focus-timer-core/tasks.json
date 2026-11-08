@@ -628,7 +628,7 @@
         "e2e/boot.spec.ts"
       ],
       "file": "docs/features/focus-timer-core/tasks/t33-launch-clock-at-process-start.md",
-      "status": "todo"
+      "status": "done"
     }
   ]
 }
