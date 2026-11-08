@@ -580,6 +580,55 @@
       ],
       "file": "docs/features/focus-timer-core/tasks/t30-in-app-launch-timing.md",
       "status": "done"
+    },
+    {
+      "id": "T31",
+      "title": "Ignore held-key repeats on every button, the dialog's included",
+      "layer": "ui",
+      "deps": [],
+      "acs": [
+        "AC-02",
+        "AC-12"
+      ],
+      "dod": "the Button primitive drops repeated Enter/Space keydowns, so holding Enter on Restart cycle opens the dialog once and leaves it open; TimerScreen no longer carries its own guard",
+      "files_hint": [
+        "src/renderer/src/components/ui/Button.tsx",
+        "src/renderer/src/components/ui/Button.test.tsx",
+        "src/renderer/src/components/ui/Dialog.test.tsx",
+        "src/renderer/src/screens/TimerScreen.tsx",
+        "src/renderer/src/screens/TimerScreen.test.tsx"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t31-held-keys-on-every-button.md",
+      "status": "todo"
+    },
+    {
+      "id": "T32",
+      "title": "Forget the focused control when focus leaves the controls",
+      "layer": "ui",
+      "deps": [
+        "T31"
+      ],
+      "acs": [],
+      "dod": "focus that the User moved off the controls stays where it is when a control later removes itself; focus that was on a removed control still moves to the primary button",
+      "files_hint": [
+        "src/renderer/src/screens/TimerScreen.tsx",
+        "src/renderer/src/screens/TimerScreen.test.tsx"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t32-forget-focus-on-leave.md",
+      "status": "todo"
+    },
+    {
+      "id": "T33",
+      "title": "Start the launch clock at main's process start",
+      "layer": "tests",
+      "deps": [],
+      "acs": [],
+      "dod": "the cold-launch test measures from main's performance.timeOrigin to the first paint of the ready heading and keeps the 2 s budget; the comment says what it measures",
+      "files_hint": [
+        "e2e/boot.spec.ts"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t33-launch-clock-at-process-start.md",
+      "status": "todo"
     }
   ]
 }
