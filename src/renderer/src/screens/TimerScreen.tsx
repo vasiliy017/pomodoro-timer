@@ -142,6 +142,17 @@ export function TimerScreen() {
         onFocus={(event: FocusEvent<HTMLDivElement>) => {
           lastFocusedControl.current = event.target
         }}
+        onBlur={(event: FocusEvent<HTMLDivElement>) => {
+          // Forget a control the User moved focus away from, so a later removal doesn't pull focus
+          // back. Judged after the commit: Chromium can fire blur while removing the focused node,
+          // and a removed control must stay remembered for the effect above.
+          const left = event.target
+          queueMicrotask(() => {
+            if (left.isConnected && lastFocusedControl.current === left) {
+              lastFocusedControl.current = null
+            }
+          })
+        }}
       >
         {commands
           .filter(({ name }) => controls[name])

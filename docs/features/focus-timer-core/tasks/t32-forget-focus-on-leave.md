@@ -9,8 +9,8 @@ files_hint: ["src/renderer/src/screens/TimerScreen.tsx", "src/renderer/src/scree
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: "—"
+status: "done"
+step: "COMMIT"
 ---
 
 # T32 — Forget the focused control when focus leaves the controls
@@ -19,6 +19,6 @@ Follow-up from the review: finding P3 in [review-2026-11-08.md](../_review/revie
 
 ## Definition of Done
 
-- [ ] focus on Reset, then `blur()`, then Reset removes itself: `<body>` keeps focus and the primary button is not focused
-- [ ] focus on a control that removes itself still moves to the primary button (the N5 tests stay green)
-- [ ] Unit tests, lint and typecheck are clean
+- [x] focus on Reset, then `blur()`, then Reset removes itself: `<body>` keeps focus and the primary button is not focused
+- [x] focus on a control that removes itself still moves to the primary button (the N5 tests stay green)
+- [x] Unit tests, lint and typecheck are clean

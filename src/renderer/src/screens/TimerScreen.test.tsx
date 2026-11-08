@@ -110,6 +110,22 @@ describe('TimerScreen', () => {
       rerender(<TimerScreen />)
       expect(document.body).toHaveFocus()
     })
+
+    // Focus a control, then click the window background: focus is on <body> by the User's choice.
+    // A control that later removes itself (the phase ends) must not pull focus back.
+    it('leaves focus alone when the User had moved it off a control that later goes away', async () => {
+      const { rerender } = show(snap('focus', 'running'))
+      const reset = screen.getByRole('button', { name: 'Reset' })
+      reset.focus()
+      reset.blur()
+      await act(async () => {}) // the blur is judged once the current task's work has settled
+      expect(document.body).toHaveFocus()
+      const after = snap('shortBreak', 'ready', { revision: 2, completedInCycle: 1 })
+      hook.mockReturnValue({ snapshot: after, remainingMs: after.remainingMs, send })
+      rerender(<TimerScreen />)
+      expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull()
+      expect(document.body).toHaveFocus()
+    })
   })
 
   it('keeps keyboard focus on the primary button across Start, Pause and Resume', () => {
