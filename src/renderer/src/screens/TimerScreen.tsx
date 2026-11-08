@@ -1,11 +1,4 @@
-import {
-  useLayoutEffect,
-  useRef,
-  useState,
-  type FocusEvent,
-  type KeyboardEvent,
-  type MouseEvent
-} from 'react'
+import { useLayoutEffect, useRef, useState, type FocusEvent, type MouseEvent } from 'react'
 import {
   lossMessage,
   type Controls,
@@ -65,14 +58,6 @@ function onSingleClick(action: () => void) {
   return (event: MouseEvent) => {
     if (event.detail <= 1) action()
   }
-}
-
-/**
- * A held Enter auto-repeats keydown, and each repeat clicks the focused button again at the new
- * revision (AC-02). Only the first press counts; Space is covered too for the same reason.
- */
-function dropHeldKeys(event: KeyboardEvent) {
-  if (event.repeat && (event.key === 'Enter' || event.key === ' ')) event.preventDefault()
 }
 
 type ControlName = Exclude<keyof Controls, 'restartCycle'>
@@ -167,15 +152,12 @@ export function TimerScreen() {
               ref={primary ? primaryRef : undefined}
               variant={primary ? 'primary' : 'secondary'}
               onClick={onSingleClick(() => void send(name))}
-              onKeyDown={dropHeldKeys}
             >
               {label}
             </Button>
           ))}
         {controls.restartCycle && (
-          <Button onClick={onSingleClick(() => void restartCycle())} onKeyDown={dropHeldKeys}>
-            Restart cycle
-          </Button>
+          <Button onClick={onSingleClick(() => void restartCycle())}>Restart cycle</Button>
         )}
       </div>
 

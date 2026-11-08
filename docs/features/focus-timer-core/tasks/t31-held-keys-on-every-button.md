@@ -9,8 +9,8 @@ files_hint: ["src/renderer/src/components/ui/Button.tsx", "src/renderer/src/comp
 owner: "Vasiliy"
 estimate: "S"
 context_budget: "S"
-status: "todo"
-step: "—"
+status: "done"
+step: "COMMIT"
 ---
 
 # T31 — Ignore held-key repeats on every button, the dialog's included
@@ -19,7 +19,7 @@ Follow-up from the review: finding P1 in [review-2026-11-08.md](../_review/revie
 
 ## Definition of Done
 
-- [ ] the `Button` primitive drops repeated Enter/Space keydowns (`event.repeat`) and still calls a caller's own `onKeyDown`
-- [ ] holding Enter on Restart cycle opens the confirmation dialog once and leaves it open: a repeated Enter on Cancel does not close it (AC-02, AC-12)
-- [ ] `TimerScreen` no longer carries its own `dropHeldKeys`; its held-key tests still pass
-- [ ] Unit tests, lint and typecheck are clean
+- [x] the `Button` primitive drops repeated Enter/Space keydowns (`event.repeat`) and still calls a caller's own `onKeyDown`
+- [x] holding Enter on Restart cycle opens the confirmation dialog once and leaves it open: a repeated Enter on Cancel does not close it (AC-02, AC-12)
+- [x] `TimerScreen` no longer carries its own `dropHeldKeys`; its held-key tests still pass
+- [x] Unit tests, lint and typecheck are clean

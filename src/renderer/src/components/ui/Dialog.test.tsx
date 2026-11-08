@@ -59,6 +59,18 @@ describe('Dialog', () => {
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
   })
 
+  // Holding Enter on Restart cycle opens the dialog with focus on Cancel; the key's auto-repeat
+  // must not then click Cancel (AC-02: a held press has the effect of one press).
+  it('ignores an auto-repeated Enter or Space on its buttons', () => {
+    renderDialog()
+    for (const name of ['Cancel', 'Restart cycle']) {
+      for (const key of ['Enter', ' ']) {
+        const button = screen.getByRole('button', { name })
+        expect(fireEvent.keyDown(button, { key, repeat: true }), `${key} on ${name}`).toBe(false)
+      }
+    }
+  })
+
   it('closes when open turns false', () => {
     const { rerender, onConfirm, onCancel } = renderDialog()
     rerender(

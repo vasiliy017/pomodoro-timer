@@ -599,7 +599,7 @@
         "src/renderer/src/screens/TimerScreen.test.tsx"
       ],
       "file": "docs/features/focus-timer-core/tasks/t31-held-keys-on-every-button.md",
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T32",

@@ -38,7 +38,7 @@
 | T28 | Document that an ignored command can first settle a phase that is already due | docs | Vasiliy | S | — | done | COMMIT |
 | T29 | Make the double-click, held-key, second-launch and relaunch e2e tests able to fail | tests | Vasiliy | S | T27 | done | COMMIT |
 | T30 | Measure launch time inside the app | tests | Vasiliy | S | T29 | done | COMMIT |
-| T31 | Ignore held-key repeats on every button, the dialog's included | ui | Vasiliy | S | — | todo | — |
+| T31 | Ignore held-key repeats on every button, the dialog's included | ui | Vasiliy | S | — | done | COMMIT |
 | T32 | Forget the focused control when focus leaves the controls | ui | Vasiliy | S | T31 | todo | — |
 | T33 | Start the launch clock at main's process start | tests | Vasiliy | S | — | todo | — |
 
