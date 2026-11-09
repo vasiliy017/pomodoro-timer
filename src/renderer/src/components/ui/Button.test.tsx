@@ -17,10 +17,13 @@ describe('Button', () => {
     expect(fireEvent.keyDown(screen.getByRole('button'), { key: 'Tab', repeat: true })).toBe(true)
   })
 
-  it("still calls the caller's onKeyDown", () => {
+  it("still calls the caller's onKeyDown, and still drops the held key", () => {
     const onKeyDown = vi.fn()
     render(<Button onKeyDown={onKeyDown}>Go</Button>)
-    fireEvent.keyDown(screen.getByRole('button'), { key: 'Enter', repeat: true })
+    // A caller's onKeyDown must not replace the guard (AC-02, AC-12).
+    expect(fireEvent.keyDown(screen.getByRole('button'), { key: 'Enter', repeat: true })).toBe(
+      false
+    )
     expect(onKeyDown).toHaveBeenCalledOnce()
   })
 })

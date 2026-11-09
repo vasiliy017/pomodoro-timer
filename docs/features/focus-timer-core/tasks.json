@@ -658,7 +658,7 @@
         "src/renderer/src/components/ui/Button.test.tsx"
       ],
       "file": "docs/features/focus-timer-core/tasks/t35-guard-survives-caller-onkeydown.md",
-      "status": "todo"
+      "status": "done"
     }
   ]
 }

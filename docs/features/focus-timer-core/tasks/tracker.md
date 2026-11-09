@@ -42,6 +42,6 @@
 | T32 | Forget the focused control when focus leaves the controls | ui | Vasiliy | S | T31 | done | COMMIT |
 | T33 | Start the launch clock at main's process start | tests | Vasiliy | S | — | done | COMMIT |
 | T34 | Keep the remembered control when the window loses focus | ui | Vasiliy | S | — | done | COMMIT |
-| T35 | Pin the held-key guard against a caller's onKeyDown | tests | Vasiliy | S | — | todo | — |
+| T35 | Pin the held-key guard against a caller's onKeyDown | tests | Vasiliy | S | — | done | COMMIT |
 
 **Total:** 35 tasks (T18–T35 are review follow-ups), ~23 person-days (S ≈ ½ day, M ≈ 1 day).
