@@ -629,6 +629,36 @@
       ],
       "file": "docs/features/focus-timer-core/tasks/t33-launch-clock-at-process-start.md",
       "status": "done"
+    },
+    {
+      "id": "T34",
+      "title": "Keep the remembered control when the window loses focus",
+      "layer": "ui",
+      "deps": [],
+      "acs": [],
+      "dod": "the controls forget a control only when focus has actually moved off it; a window blur (focus still on the control) keeps it remembered, so a phase end while the User is in another app still moves focus to the primary button",
+      "files_hint": [
+        "src/renderer/src/screens/TimerScreen.tsx",
+        "src/renderer/src/screens/TimerScreen.test.tsx"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t34-keep-focus-on-window-blur.md",
+      "status": "todo"
+    },
+    {
+      "id": "T35",
+      "title": "Pin the held-key guard against a caller's onKeyDown",
+      "layer": "tests",
+      "deps": [],
+      "acs": [
+        "AC-02",
+        "AC-12"
+      ],
+      "dod": "the Button test that passes its own onKeyDown also asserts the auto-repeated Enter is still prevented",
+      "files_hint": [
+        "src/renderer/src/components/ui/Button.test.tsx"
+      ],
+      "file": "docs/features/focus-timer-core/tasks/t35-guard-survives-caller-onkeydown.md",
+      "status": "todo"
     }
   ]
 }
