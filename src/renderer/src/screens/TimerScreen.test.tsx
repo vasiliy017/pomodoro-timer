@@ -126,6 +126,22 @@ describe('TimerScreen', () => {
       expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull()
       expect(document.body).toHaveFocus()
     })
+
+    // Switching to another app blurs the focused control, but it stays document.activeElement.
+    // The phase usually ends while the User is away (AC-06), so the control must stay remembered.
+    it('still moves focus to the primary button when the window lost focus before the control went away', async () => {
+      const { rerender } = show(snap('focus', 'running'))
+      const reset = screen.getByRole('button', { name: 'Reset' })
+      reset.focus()
+      fireEvent.blur(reset) // a window blur: no relatedTarget, focus stays on Reset
+      await act(async () => {})
+      expect(reset).toHaveFocus()
+      const after = snap('shortBreak', 'ready', { revision: 2, completedInCycle: 1 })
+      hook.mockReturnValue({ snapshot: after, remainingMs: after.remainingMs, send })
+      rerender(<TimerScreen />)
+      expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull()
+      expect(screen.getByRole('button', { name: 'Start' })).toHaveFocus()
+    })
   })
 
   it('keeps keyboard focus on the primary button across Start, Pause and Resume', () => {
